@@ -3,11 +3,11 @@
   "short_name": "BlockPuzzle",
   "description": "لعبة تجميع الكتل الممتعة!",
   "start_url": "/?source=pwa",
-  "display": "standalone",
+  "display": "fullscreen",
   "display_override": ["fullscreen", "standalone"],
   "orientation": "portrait",
-  "background_color": "#000000",
-  "theme_color": "#000000",
+  "background_color": "#121212",
+  "theme_color": "#121212",
   "scope": "/",
   "icons": [
     {
