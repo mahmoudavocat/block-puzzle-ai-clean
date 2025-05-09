@@ -2281,6 +2281,11 @@ function startResumeCountdown() {
 
 
 function showReactionMessage(message) {
+  if (isGamePausedDueToVisibility || !screens.game.classList.contains("active")) {
+  console.log("⛔ تم تجاهل رسالة AI لأن الجيم متوقف أو مغلق");
+  return;
+}
+
   SoundManager.play('bubbleAppear');
   const aiBubble = document.getElementById("aiBubble");
   const aiBoard = document.getElementById("aiBoard");
