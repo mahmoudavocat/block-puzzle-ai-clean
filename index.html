@@ -7,7 +7,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
 
   <script>
     function enterFullscreen() {
@@ -36,8 +37,18 @@
   <style>
 
     
+body {
+  padding: 0;
+  margin: 0;
+}
 
 
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
 
 
     body {
@@ -1212,25 +1223,25 @@ if (canvas) {
 
     const weightedShapes = [
   { shape: [[0,0]], weight: 1 }, // نقطة واحدة
-  { shape: [[0,0],[1,0]], weight: 2 }, // خط رأسي مكون من نقطتين
-  { shape: [[0,0],[0,1]], weight: 2 }, // خط أفقي مكون من نقطتين
-  { shape: [[0,0],[1,0],[0,1]], weight: 2 }, // شكل L صغير
-  { shape: [[0,0],[1,0],[2,0]], weight: 2 }, // خط رأسي مكون من 3 نقاط
-  { shape: [[0,0],[0,1],[0,2]], weight: 2 }, // خط أفقي مكون من 3 نقاط
+  { shape: [[0,0],[1,0]], weight: 1 }, // خط رأسي مكون من نقطتين
+  { shape: [[0,0],[0,1]], weight: 1 }, // خط أفقي مكون من نقطتين
+  { shape: [[0,0],[1,0],[0,1]], weight: 1 }, // شكل L صغير
+  { shape: [[0,0],[1,0],[2,0]], weight: 4 }, // خط رأسي مكون من 3 نقاط
+  { shape: [[0,0],[0,1],[0,2]], weight: 4 }, // خط أفقي مكون من 3 نقاط
   { shape: [[0,0],[1,0],[1,1]], weight: 2 }, // شكل زاوية يمين تحت
   { shape: [[0,0],[0,1],[1,1]], weight: 2 }, // شكل زاوية يسار تحت
-  { shape: [[0,0],[1,0],[2,0],[0,1],[1,1],[2,1]], weight: 5 }, // مستطيل 2x3
+  { shape: [[0,0],[1,0],[2,0],[0,1],[1,1],[2,1]], weight: 7 }, // مستطيل 2x3
   { shape: [[0,0],[1,0],[2,0],[1,1]], weight: 1 }, // شكل T مقلوب
-  { shape: [[0,0],[0,1],[1,1],[2,1]], weight: 3 }, // شكل سهم لليمين
+  { shape: [[0,0],[0,1],[1,1],[2,1]], weight: 2 }, // شكل سهم لليمين
   { shape: [[0,0],[1,0],[2,0],[3,0]], weight: 3 }, // خط رأسي طويل 4 نقاط
   { shape: [[0,0],[0,1],[0,2],[0,3]], weight: 3 }, // خط أفقي طويل 4 نقاط
-  { shape: [[0,0],[1,0],[0,1],[1,1]], weight: 5 }, // مربع 2x2
-  { shape: [[0,0],[1,0],[2,0],[0,1],[1,1],[2,1],[0,2],[1,2],[2,2]], weight: 5 }, // مربع 3x3
-  { shape: [[0,0],[0,1],[0,2],[1,2],[2,2]], weight: 3 }, // شكل L معكوس كبير
-  { shape: [[0,0],[2,0],[0,1],[2,1],[0,2],[1,2],[2,2]], weight: 1 }, // شكل U
+  { shape: [[0,0],[1,0],[0,1],[1,1]], weight: 7 }, // مربع 2x2
+  { shape: [[0,0],[1,0],[2,0],[0,1],[1,1],[2,1],[0,2],[1,2],[2,2]], weight: 7 }, // مربع 3x3
+  { shape: [[0,0],[0,1],[0,2],[1,2],[2,2]], weight: 1 }, // شكل L معكوس كبير
+  { shape: [[0,0],[2,0],[0,1],[2,1],[0,2],[1,2],[2,2]], weight: 0.5 }, // شكل U
   { shape: [[0,0],[1,0],[2,0],[1,1],[1,2]], weight: 2 }, // شكل +
-  { shape: [[0,0],[1,0],[1,1],[1,2],[2,2]], weight: 1 }, // شكل S مائل
-  { shape: [[0,0],[0,1],[1,1],[1,2],[2,2]], weight: 1 }  // شكل Z مائل
+  { shape: [[0,0],[1,0],[1,1],[1,2],[2,2]], weight: 0.5 }, // شكل S مائل
+  { shape: [[0,0],[0,1],[1,1],[1,2],[2,2]], weight: 0.5 }  // شكل Z مائل
 ];
 
 
@@ -1298,10 +1309,11 @@ document.body.addEventListener('touchstart', () => {
     function updateScore() {
       scoreboard.textContent = `Score: ${score}`;
       let smartFactor = 0;
-      if (playerBehavior.avgSpeed && playerBehavior.avgSpeed < 2500) smartFactor += 1;
-      if (playerBehavior.perfectClears >= 3) smartFactor += 1;
-      if (playerBehavior.nearFails === 0 && score > 500) smartFactor += 1;
-      difficultyLevel = 1 + smartFactor;
+if (playerBehavior.avgSpeed && playerBehavior.avgSpeed < 2000) smartFactor += 1;
+if (playerBehavior.perfectClears >= 5) smartFactor += 1;
+if (playerBehavior.nearFails === 0 && score > 800) smartFactor += 1;
+difficultyLevel = 1 + smartFactor * 0.7; // تقليل وتيرة التصاعد
+
     }
 
     function xyToIndex(x, y) {
@@ -1378,10 +1390,11 @@ document.body.addEventListener('touchstart', () => {
         let rotation = Math.floor(Math.random() * 4);
         shape = rotateShape(shape, rotation);
 
-        if (Math.random() < 0.3 && isLineClearShape(shape)) {
+        if (Math.random() < 10 && isLineClearShape(shape)) {
   shapesInHand.push(shape);
-  continue; // نكمل على طول بدون فحص
+  continue;
 }
+
 
 function isLineClearShape(shape) {
   const xs = shape.map(([x, _]) => x);
@@ -1389,9 +1402,9 @@ function isLineClearShape(shape) {
   const uniqueX = new Set(xs).size;
   const uniqueY = new Set(ys).size;
 
-  // شكل مرصوص أفقيًا أو عموديًا (يعني شكله يساعد في المسح)
-  return uniqueY === 1 || uniqueX === 1;
+  return uniqueX === 1 || uniqueY === 1 || shape.length === 4 || shape.length === 9; // خطوط أو مربعات
 }
+
 
 
         if (canShapeFitAnywhere(shape)) {
