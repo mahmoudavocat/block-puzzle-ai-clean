@@ -1,0 +1,2297 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head><!-- في قسم head أو بداية body -->
+  <audio id="sound-button-click" src="assets/sounds/button-click.mp3" preload="auto"></audio>
+  <audio id="sound-shape-pick" src="assets/sounds/shape-pick.mp3" preload="auto"></audio>
+  <audio id="sound-line-clear" src="assets/sounds/line-clear.mp3" preload="auto"></audio>
+  <audio id="sound-combo-clear" src="assets/sounds/combo-clear.mp3" preload="auto"></audio>
+  <audio id="sound-bubble-appear" src="assets/sounds/bubble-appear.mp3" preload="auto"></audio>
+  <title>Block Puzzle AI</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <style>
+
+    
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #eef6fb;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100vh;
+      touch-action: manipulation;
+      overflow: hidden;
+      padding: 10px;
+    }
+    
+    .back-home-btn {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 48px;
+      height: 48px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid #2196F3;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .back-home-btn:hover {
+      background: #2196F3;
+      transform: scale(1.1);
+    }
+    
+    .back-home-btn svg {
+      stroke: #2196F3;
+      transition: all 0.3s ease;
+    }
+    
+    .back-home-btn:hover svg {
+      stroke: white;
+    }
+    
+    .screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: #eef6fb;
+      text-align: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    
+    .active { display: flex; }
+    
+    h1, h2 {
+      color: #2196f3;
+      margin: 10px;
+      font-weight: 600;
+    }
+    
+    .btn {
+      background: linear-gradient(45deg, #2196f3, #21cbf3);
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 1.2em;
+      margin-top: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+    
+    #scoreboard {
+      font-size: 1.2rem;
+      margin: 10px;
+      font-weight: bold;
+      color: #2196F3;
+    }
+    
+    #grid {
+      display: grid;
+      gap: 2px;
+      margin: 10px auto;
+      width: 90vmin;
+      height: 90vmin;
+      max-width: 400px;
+      max-height: 400px;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(8, 1fr);
+    }
+    
+    .cell {
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      transition: background 0.3s ease;
+    }
+    
+    .filled { background: #2196f3; }
+    .preview { background-color: rgba(33, 150, 243, 0.5); }
+    .line-clear-preview { background-color: rgba(76, 175, 80, 0.6) !important; }
+    
+    #shapes {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 10px auto;
+      width: 100%;
+      max-width: 600px;
+    }
+    
+    .shape {
+      display: grid;
+      grid-template-columns: repeat(4, clamp(20px, 5vmin, 60px));
+      grid-template-rows: repeat(4, clamp(20px, 5vmin, 60px));
+      gap: 2px;
+      cursor: grab;
+      touch-action: none;
+      padding: 10px;
+    }
+    
+    .block {
+      width: 100%;
+      height: 100%;
+      background: #2196f3;
+      border-radius: 4px;
+      transition: transform 0.15s ease;
+      pointer-events: none;
+    }
+    
+    .floating {
+      position: absolute;
+      z-index: 999;
+      pointer-events: none;
+      opacity: 0.95;
+      transition: left 0.07s ease, top 0.07s ease;
+      transform: none !important;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 2px;
+    }
+    
+    #finalScoreDisplay {
+      font-size: 2.5rem;
+      color: #4caf50;
+      font-weight: bold;
+      margin-top: 20px;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: all 0.6s ease;
+    }
+    
+    #finalScoreDisplay.show {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+    
+    #countdown {
+      font-size: 1.1rem;
+      margin-top: 10px;
+      color: #888;
+    }
+    
+    /* 👇 AI Reaction Container */
+    #aiContainer {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      margin: 10px auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 120px;
+    }
+    
+    #aiInteractiveArea {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      margin-bottom: 10px;
+      position: relative;
+      min-height: 100px;
+    }
+    
+    .ai-bubble {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      opacity: 0;
+      transform: scale(0.5) translateY(20px);
+      transition: all 0.4s ease;
+      z-index: 10;
+      margin-right: 15px;
+    }
+    
+    .ai-bubble.show {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+    
+    .bubble-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #ffffff22, #00000033);
+      border: 2px solid #ffffff55;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: float 4s ease-in-out infinite;
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    
+    .bubble-inner img {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+      animation: avatarPulse 2.8s ease-in-out infinite, avatarBlink 6s ease-in-out infinite;
+      transform-origin: center center;
+    }
+    
+    @keyframes avatarPulse {
+      0%, 100% { transform: scale(1); filter: brightness(1); }
+      50% { transform: scale(1.2); filter: brightness(1.25); }
+    }
+    
+    @keyframes avatarBlink {
+      0%, 96%, 100% { transform: scaleY(1); filter: brightness(1); }
+      97% { transform: scaleY(0.1); filter: brightness(0.3); }
+      98% { transform: scaleY(1); filter: brightness(1); }
+    }
+    
+    #aiBoard {
+  width: 90vmin;
+  max-width: 400px;
+  min-height: 80px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  padding: 10px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  opacity: 0;
+  transform: scaleX(0);
+  transition: all 0.4s ease;
+  overflow: hidden;
+}
+    
+    #aiBoard.show {
+      transform: scaleX(1);
+      opacity: 1;
+    }
+    
+    #aiText {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2196f3;
+  text-align: center;
+  line-height: 1.4;
+  padding: 0 10px;
+  word-break: break-word;
+  max-width: 100%;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.5s ease;
+  margin: 0;
+}
+
+    
+    #aiText.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    #aiHeatBar {
+      width: 100%;
+      height: 8px;
+      background: linear-gradient(to right, #ff5722, #ffc107);
+      border-radius: 6px;
+      margin-top: 10px;
+      transform: scaleX(0);
+      transform-origin: left;
+      opacity: 0;
+      transition: transform 3s linear, opacity 0.5s ease;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    
+    #aiHeatBar.active {
+      transform: scaleX(1);
+      opacity: 1;
+    }
+    
+    @keyframes bubbleEnter {
+      0% { opacity: 0; transform: scale(0.2) rotate(0deg); filter: blur(4px); }
+      20% { opacity: 1; transform: scale(1.05) rotate(2deg); }
+      40% { transform: scale(0.95) rotate(-2deg); }
+      60% { transform: scale(1.02) rotate(1deg); }
+      80% { transform: scale(0.98) rotate(-1deg); }
+      100% { transform: scale(1) rotate(0deg); filter: blur(0); }
+    }
+    
+    @keyframes bubbleExit {
+      0% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(0.5) rotate(-10deg); filter: blur(3px); }
+    }
+    
+    .ai-bubble.show {
+      animation: bubbleEnter 0.4s ease-out forwards;
+    }
+    
+    .ai-bubble.hide {
+      animation: bubbleExit 0.4s ease-in forwards;
+    }
+    
+    @keyframes boardEnter {
+      0% { transform: translateX(-100%) scaleX(0); opacity: 0; }
+      60% { transform: translateX(20%) scaleX(1.1); opacity: 1; }
+      100% { transform: translateX(0) scaleX(1); opacity: 1; }
+    }
+    
+    @keyframes boardExit {
+      0% { transform: translateX(0) scaleX(1); opacity: 1; }
+      100% { transform: translateX(-100%) scaleX(0); opacity: 0; }
+    }
+    
+    #aiBoard.show {
+      animation: boardEnter 0.5s ease-out forwards;
+    }
+    
+    #aiBoard.hide {
+      animation: boardExit 0.5s ease-in forwards;
+    }
+    
+    .welcome-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #eef6fb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 1000;
+    }
+    
+    .welcome-card {
+  background: linear-gradient(to bottom, #ffffff, #f3faff);
+  padding: 30px 25px;
+  border-radius: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  max-width: 380px;
+  width: 90%;
+  animation: fadeInCard 0.5s ease-out;
+}
+
+@keyframes fadeInCard {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+
+    .welcome-card p {
+      font-size: 1.3rem;
+      margin-bottom: 15px;
+    }
+    
+    .welcome-card .btn {
+      margin: 8px;
+    }
+    
+    .game-title {
+      font-size: 3.5rem;
+      color: #2196F3;
+      margin: 0 0 30px 0;
+      font-weight: 800;
+      text-shadow: 0 3px 6px rgba(0,0,0,0.1);
+      animation: pulse 2s infinite;
+      display: inline-block;
+      padding: 0 20px;
+      text-align: center;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+      100% { transform: scale(1); }
+    }
+    
+    #menu {
+      overflow: hidden;
+      padding: 0 15px;
+      justify-content: center;
+    }
+    
+    .menu-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      margin-top: -50px;
+    }
+    
+    .start-btn {
+      padding: 15px 40px;
+      font-size: 1.5rem;
+      margin: 10px 0;
+    }
+    
+    .stats-btn {
+      background: rgba(33, 150, 243, 0.1);
+      color: #2196F3;
+      margin: 10px 0 30px 0;
+    }
+    
+    .copyright {
+      font-size: 0.8rem; 
+      color: #777;
+      margin-top: 40px;
+      position: absolute;
+      bottom: 20px;
+    }
+    
+    .hidden {
+      display: none !important;
+    }
+    
+    #aiFlash {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: white;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 9999;
+      transition: opacity 0.2s ease;
+    }
+    
+/* النقاط */
+.ai-dots {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 3px;
+  margin-top: 6px;
+  animation: curveDots 2s infinite ease-in-out;
+}
+
+@keyframes curveDots {
+  0% { transform: translateX(-50%) translateY(0) rotate(0deg); }
+  50% { transform: translateX(-50%) translateY(3px) rotate(25deg); }
+  100% { transform: translateX(-50%) translateY(0) rotate(0deg); }
+}
+
+.ai-dots span {
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+  opacity: 0.6;
+  animation: dotFlash 1s infinite alternate;
+}
+
+.ai-dots span:nth-child(2) { animation-delay: 0.2s; }
+.ai-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dotFlash {
+  0% { transform: scale(1); opacity: 0.4; }
+  100% { transform: scale(1.3); opacity: 1; }
+}
+
+/* Avatar blinking effect */
+#aiAvatar.blink {
+  opacity: 0.3;
+  transition: opacity 0.2s;
+}
+
+@keyframes mockShake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+  100% { transform: translateX(0); }
+}
+
+#aiBubble.mocking {
+  animation: mockShake 0.6s ease;
+}
+
+@keyframes shakeButton {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-3px, 0); }
+  40% { transform: translate(3px, 0); }
+  60% { transform: translate(-3px, 0); }
+  80% { transform: translate(3px, 0); }
+  100% { transform: translate(0, 0); }
+}
+
+.shaky {
+  animation: shakeButton 0.6s infinite;
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 10px #21cbf3, 0 0 20px #21cbf3; transform: scale(1); }
+  50% { box-shadow: 0 0 20px #00ff99, 0 0 30px #00ff99; transform: scale(1.05); }
+  100% { box-shadow: 0 0 10px #21cbf3, 0 0 20px #21cbf3; transform: scale(1); }
+}
+
+@keyframes colorShift {
+  0% { background: linear-gradient(45deg, #2196f3, #21cbf3); }
+  50% { background: linear-gradient(45deg, #00e676, #00c853); }
+  100% { background: linear-gradient(45deg, #2196f3, #21cbf3); }
+}
+
+.power-btn {
+  animation: pulseGlow 2s infinite, colorShift 5s infinite;
+}
+
+@keyframes countdownColor {
+  0% { color: #00c853; }
+  50% { color: #ffc107; }
+  100% { color: #f44336; }
+}
+
+.countdown-animate {
+  animation: countdownColor 5s linear forwards;
+}
+
+@keyframes scoreBounce {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.2); opacity: 1; }
+  80% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+.bounce-in {
+  animation: scoreBounce 1s ease forwards;
+}
+
+.golden-btn {
+  background: linear-gradient(45deg, #ffd700, #ffb300);
+  color: #fff8dc;
+  border: none;
+  padding: 15px 30px;
+  font-size: 1.4rem;
+  font-weight: bold;
+  border-radius: 16px;
+  cursor: pointer;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+  animation: goldenPulse 2s infinite alternate;
+  transition: all 0.3s ease;
+}
+
+.golden-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.8);
+}
+
+@keyframes goldenPulse {
+  0% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.6); }
+  100% { box-shadow: 0 0 20px rgba(255, 215, 0, 1); }
+}
+
+.welcome-btn {
+  padding: 14px 28px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #2196f3, #21cbf3);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 140px;
+}
+
+.welcome-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+}
+
+
+
+    </style>
+    
+</head>
+<body>
+  <div class="welcome-screen" id="welcomeScreen">
+    <div class="welcome-card">
+      <p id="welcomeText" style="display:none;"></p>
+
+
+      <div id="langButtons" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 10px;">
+        <button onclick="chooseLanguage('ar')" class="welcome-btn">🌍 عربي</button>
+        <button onclick="chooseLanguage('en')" class="welcome-btn">🌍 English</button>
+      </div>
+      
+      <div id="step2" style="display:none; flex-direction: column; gap: 10px;">
+        <p id="genderText">👤 إنت ولد ولا بنت؟</p>
+        <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+          <button onclick="chooseGender('male')" class="welcome-btn">🚹 ولد</button>
+          <button onclick="chooseGender('female')" class="welcome-btn">🚺 بنت</button>
+        </div>
+      </div>
+
+      <div id="step3" style="display:none; flex-direction: column; gap: 10px;">
+        <p id="ageText">🎂 عمرك أقل من 18 ولا أكتر؟</p>
+        <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+          <button onclick="chooseAge('under18')" class="welcome-btn">🔢 أقل من 18</button>
+          <button onclick="chooseAge('above18')" class="welcome-btn">🔢 أكبر من 18</button>
+        </div>
+      </div>
+
+      
+      <div id="finalStep" style="display:none;"></div>
+
+      
+    </div>
+  </div>
+</div> <!-- نهاية welcomeScreen -->
+
+<!-- هنا تحط شاشة avatarIntroScreen الجديدة -->
+<div class="welcome-screen hidden" id="avatarIntroScreen">
+  <div id="avatarWrapper" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:20px;">
+    
+    <div id="introAiBubble" class="ai-bubble show" style="width:120px;height:120px;">
+      <div class="bubble-inner" style="width:100%;height:100%;">
+        <img id="introAiAvatar" src="assets/ai_default.png" alt="AI" style="width:90px;height:90px;"/>
+        <div class="ai-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+    
+    <div id="introAiBoard" class="show" style="
+  background: white;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  width: 90%;
+  max-width: 400px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;">
+
+      <div id="introAiText" style="font-size:1.3rem;color:#2196F3;line-height:1.5;text-align:center;word-wrap:break-word;"></div>
+    </div>
+
+  </div>
+</div>
+
+
+
+  <!-- Screens -->
+  <div class="screen active" id="menu">
+    <div class="menu-content">
+      <h1 class="game-title">Block Puzzle AI</h1>
+      <button class="btn start-btn" onclick="startGame()">ابدأ رحلتي</button>
+      <button class="btn stats-btn" onclick="showPlayerStats()">📈 بياناتي</button>
+      <p class="copyright">By: NovaCode Studio © 2025</p>
+  
+      <div id="adBanner" style="width:100%; height:50px; background:#e6e6e6; display:flex; align-items:center; justify-content:center; font-size:14px; color:#333; margin-top: 20px;">
+        إعلان تجريبي هنا (Banner)
+      </div>
+    </div>
+  </div>
+  
+  <div class="screen" id="game">
+    <button id="backToMenuBtn" onclick="backToMenu()" class="back-home-btn">
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <path d="M19 12H5M12 19l-7-7 7-7" stroke="#2196F3" stroke-width="2"/>
+      </svg>
+    </button>
+    
+    <div id="scoreboard">Score: 0</div>
+    
+    <!-- AI Interactive Area -->
+    <div id="aiContainer">
+      <div id="aiInteractiveArea">
+        <div id="aiBubble" class="ai-bubble hidden">
+          <div class="bubble-inner">
+            <img id="aiAvatar" src="assets/ai_default.png" alt="AI" />
+            <div class="ai-dots">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+        
+        <div id="aiBoard" class="hidden">
+          <div id="aiText"></div>
+          <div id="aiHeatBar"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="grid"></div>
+    <div id="shapes"></div>
+  </div>
+
+  <div class="screen" id="gameover">
+    <h1>Game Over</h1>
+    <div id="finalScoreDisplay"></div>
+    <p id="motivationalText" style="font-size: 1.2rem; margin: 10px 0; color: #f4a300; font-weight: bold;"></p>
+    <button class="golden-btn" id="resumeBtn" onclick="resumeGame()">✨ استكمل اللعب</button>
+    <button class="btn" id="restartBtn" style="display:none;" onclick="restartGame()">ابدأ من جديد</button>
+    <button class="btn golden-btn" id="insightBtn" onclick="showInsightReport()" style="margin-top: 10px; font-size: 1.1rem;">...</button>
+
+
+
+    <div id="countdown" class="countdown-animate">انتظر 5 ثواني...</div>
+  </div>
+  
+  
+
+  <div id="playerStats" class="welcome-screen" style="display:none;">
+    <div class="welcome-card">
+      <p id="statsText">بيانات اللاعب:</p>
+      <div id="statsContent"></div>
+      <button class="btn" id="backBtn" onclick="closeStats()">🔙 رجوع</button>
+    </div>
+  </div>
+  
+
+  <div class="welcome-screen hidden fade-in" id="insightScreen">
+    <div id="insightWrapper" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:20px;">
+      <div id="insightAiBubble" class="ai-bubble show" style="width:120px;height:120px;">
+        <div class="bubble-inner" style="width:100%;height:100%;">
+          <img id="insightAiAvatar" src="assets/ai_default.png" alt="AI" style="width:90px;height:90px;"/>
+          <div class="ai-dots"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+      <div id="insightAiBoard" class="show" style="background: white;padding: 20px;border-radius: 20px;box-shadow: 0 4px 12px rgba(0,0,0,0.1);width: 90%;max-width: 400px;height: 220px;display: flex;align-items: center;justify-content: center;overflow: hidden;">
+        <div id="insightAiText" style="font-size:1.2rem;color:#2196F3;line-height:1.5;text-align:center;"></div>
+      </div>
+      <button id="shareInsightBtn" class="welcome-btn hidden" onclick="shareInsight()">🔗 شارك التحليل مع صحابك</button>
+      <button onclick="closeInsight()" class="welcome-btn hidden" id="closeInsightBtn">🏁 كفاية تحليل.. نرجع؟</button>
+    </div>
+  </div>
+
+  
+
+  <div id="aiFlash"></div>
+  <script>
+ function reloadAIResponses() {
+  const savedData = JSON.parse(localStorage.getItem("blockPlayerData")) || {};
+  const lang = savedData.language || "ar";
+  const gender = savedData.gender || "male";
+  const age = savedData.age || "under18";
+  const playerType = `${lang}_${gender}_${age}`;
+
+  console.log("🔁 إعادة تحميل الجمل التفاعلية لـ", playerType);
+
+  // هنا نحط الجمل الجاهزة من allAIResponses
+  if (window.allAIResponses && window.allAIResponses[playerType]) {
+    window.aiResponses = window.allAIResponses[playerType];
+    console.log("✅ تم تحميل الجمل التفاعلية من الملفات المجمعة");
+    window.aiReady = true;
+  } else {
+    console.error("❌ مفيش جمل تفاعلية محملة للنوع ده:", playerType);
+    window.aiReady = false;
+  }
+}
+
+
+
+
+
+
+    </script>
+    
+
+    <!-- AI Reaction Elements -->
+
+
+
+
+  <script>
+    // الكود الأساسي للعبة يبقى كما هو بدون تغيير
+    // فقط يتم تعديل دالة showAIReaction لتتناسب مع التصميم الجديد
+    
+    let messageQueue = [];
+    let isShowingMessage = false;
+
+    function showAIReaction(eventType) {
+  console.log("🔥 حدث AI مطلوب:", eventType);
+
+  messageQueue.push(eventType);
+  if (!isShowingMessage) {
+    processMessageQueue();
+  }
+}
+
+
+function processMessageQueue() {
+  if (messageQueue.length === 0) {
+    isShowingMessage = false;
+    return;
+  }
+
+  isShowingMessage = true;
+  const eventType = messageQueue.shift();
+  showSingleAIReaction(eventType);
+}
+
+
+function showSingleAIReaction(eventType) {
+  console.log("🔵 داخل showSingleAIReaction للحدث:", eventType);
+
+  const aiBubble = document.getElementById("aiBubble");
+  const aiBoard = document.getElementById("aiBoard");
+  const avatarImg = document.getElementById("aiAvatar");
+  const aiText = document.getElementById("aiText");
+  const heatBar = document.getElementById("aiHeatBar");
+
+  // 🖼️ تغيير الصورة حسب الحدث
+  switch (eventType) {
+    case "idle":
+      avatarImg.src = "assets/ai_thinking.png";
+      break;
+    case "combo":
+      avatarImg.src = "assets/ai_happy.png";
+      break;
+    case "lineClear":
+      avatarImg.src = "assets/ai_smile.png";
+      break;
+    case "nearLose":
+      avatarImg.src = "assets/ai_worried.png";
+      break;
+    case "angry":
+      avatarImg.src = "assets/ai_angry.png";
+      break;
+    case "shocked":
+      avatarImg.src = "assets/ai_shocked.png";
+      break;
+    case "embarrassed":
+      avatarImg.src = "assets/ai_embarrassed.png";
+      break;
+    default:
+      avatarImg.src = "assets/ai_default.png";
+  }
+// اهتزاز عند الغضب أو القلق
+if (eventType === "angry" || eventType === "nearLose") {
+  avatarImg.classList.add("shake");
+  setTimeout(() => {
+  // نضيف زرار جديد شيك بعد انتهاء الرسالة
+  const avatarWrapper = document.getElementById("avatarWrapper");
+  const startBtn = document.createElement("button");
+  startBtn.innerText = lang === "ar" ? "🎮 يلا نبدأ الرحلة!" : "🎮 Let's Start!";
+  startBtn.className = "welcome-btn";
+  startBtn.style.marginTop = "20px";
+  startBtn.onclick = () => {
+
+    switchScreen("menu");
+  };
+  avatarWrapper.appendChild(startBtn);
+}, 1500);
+
+}
+
+  const message = getRandomAIResponse(eventType);
+  console.log("🟡 الرسالة اللي طلعت:", message);
+
+  if (message) {
+    showReactionMessage(message);
+  } else {
+    console.log("🚨 مفيش رسالة طلعت للحدث:", eventType);
+  }
+}
+
+
+
+
+    // باقي كود اللعبة يبقى كما هو بدون تغيير
+  
+
+    const gameTranslations = {
+      ar: {
+        startBtn: "ابدأ رحلتي",
+        statsBtn: "📈 بياناتي",
+        scoreText: "النقاط: ",
+        gameOver: "انتهت اللعبة",
+        resumeBtn: "استكمل اللعب (إعلان)",
+        restartBtn: "لعبة جديدة",
+        countdownText: "أو انتظر 5 ثواني...",
+        aiThinking: "🤖 يفكر...",
+        statsTitle: "بيانات اللاعب",
+        backBtn: "🔙 رجوع",
+        levelMessage: "مستواك: عالمي"
+      },
+      en: {
+        startBtn: "Start My Journey",
+        statsBtn: "📈 My Stats",
+        scoreText: "Score: ",
+        gameOver: "Game Over",
+        resumeBtn: "Resume Game (Ad)",
+        restartBtn: "Start New Game",
+        countdownText: "Or wait 5 seconds...",
+        aiThinking: "🤖 Thinking...",
+        statsTitle: "Player Stats",
+        backBtn: "🔙 Back",
+        levelMessage: "Your Level: Pro"
+      }
+    };
+
+    
+    // بعد تعريف gameTranslations وقبل تعريف gridCells
+const soundEffects = {
+  buttonClick: document.getElementById("sound-button-click"),
+  shapePick: document.getElementById("sound-shape-pick"),
+  lineClear: document.getElementById("sound-line-clear"),
+  comboClear: document.getElementById("sound-combo-clear"),
+  bubbleAppear: document.getElementById("sound-bubble-appear"),
+  
+  play: function(sound) {
+    try {
+      this[sound].currentTime = 0;
+      this[sound].play().catch(e => console.log("لم يتم تشغيل الصوت:", e));
+    } catch(e) {
+      console.log("خطأ في تشغيل الصوت:", e);
+    }
+  }
+};
+// هنا نضيف ضبط مستويات الصوت ▼▼▼
+soundEffects.buttonClick.volume = 0.7;    // صوت الأزرار
+soundEffects.shapePick.volume = 0.6;     // صوت سحب القطعة
+soundEffects.lineClear.volume = 0.8;     // صوت مسح خط
+soundEffects.comboClear.volume = 1.0;    // صوت مسح عدة خطوط
+soundEffects.bubbleAppear.volume = 0.5;  // صوت ظهور الفقاعة
+
+    let gridCells = [], shapesInHand = [], shapesUsed = 0, score = 0;
+    let difficultyLevel = 1;
+    let floatingStartX = 0, floatingStartY = 0, pointerStartX = 0, pointerStartY = 0;
+    let aiInternalNotes = [];
+
+    let aiMemory = {
+      context: [],
+      mood: "neutral",
+      lastEvent: null,
+      intensity: 0
+    };
+
+    let playerBehavior = {
+      fastMoves: 0,
+      slowMoves: 0,
+      perfectClears: 0,
+      nearFails: 0,
+      lastMoveTime: null,
+      avgSpeed: 0,
+      totalMoves: 0
+    };
+
+    let currentShape = null, sourceElement = null, floating = null;
+    let offset = { x: 0, y: 0 }, resumed = false, monitorInterval = null;
+
+    const grid = document.getElementById("grid");
+    const shapesDiv = document.getElementById("shapes");
+    const scoreboard = document.getElementById("scoreboard");
+    const finalScoreDisplay = document.getElementById("finalScoreDisplay");
+    const resumeBtn = document.getElementById("resumeBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const countdownEl = document.getElementById("countdown");
+
+    const screens = {
+      menu: document.getElementById("menu"),
+      game: document.getElementById("game"),
+      gameover: document.getElementById("gameover")
+    };
+
+    const weightedShapes = [
+      { shape: [[0,0]], weight: 1 },
+      { shape: [[0,0],[1,0]], weight: 2 },
+      { shape: [[0,0],[0,1]], weight: 2 },
+      { shape: [[0,0],[1,0],[0,1]], weight: 2 },
+      { shape: [[0,0],[1,0],[2,0]], weight: 3 },
+      { shape: [[0,0],[0,1],[0,2]], weight: 3 },
+      { shape: [[0,0],[1,0],[1,1]], weight: 3 },
+      { shape: [[0,0],[0,1],[1,1]], weight: 3 },
+      { shape: [[0,0],[1,0],[2,0],[0,1],[1,1],[2,1]], weight: 5 }, // 2x3 block
+      { shape: [[0,0],[1,0],[2,0],[1,1]], weight: 2 }, // T
+      { shape: [[0,0],[0,1],[1,1],[2,1]], weight: 3 },
+      { shape: [[0,0],[1,0],[2,0],[3,0]], weight: 5 },
+      { shape: [[0,0],[0,1],[0,2],[0,3]], weight: 5 },
+      { shape: [[0,0],[1,0],[0,1],[1,1]], weight: 5 },
+      { shape: [[0,0],[1,0],[2,0],[0,1],[1,1],[2,1],[0,2],[1,2],[2,2]], weight: 4 }, // 3x3
+      { shape: [[0,0],[0,1],[0,2],[1,2],[2,2]], weight: 3 },
+      { shape: [[0,0],[2,0],[0,1],[2,1],[0,2],[1,2],[2,2]], weight: 1 }, // U
+      { shape: [[0,0],[1,0],[2,0],[1,1],[1,2]], weight: 2 }, // +
+      { shape: [[0,0],[1,0],[1,1],[1,2],[2,2]], weight: 1 }, // S
+      { shape: [[0,0],[0,1],[1,1],[1,2],[2,2]], weight: 1 }  // Z
+    ];
+
+    function switchScreen(screen) {
+      Object.values(screens).forEach(s => s.classList.remove("active"));
+      screens[screen].classList.add("active");
+    }
+
+    function startGame() {
+      const btnSound = document.getElementById('sound-button');
+  if (btnSound) {
+    btnSound.currentTime = 0;
+    btnSound.volume = 0.7;
+    btnSound.play().catch(e => console.error("Error playing button sound:", e));
+  } else {
+    console.error("Button sound element not found!");
+  }
+      if (!window.aiReady) {
+  console.log("لسه مستني تحميل الجمل...");
+  setTimeout(startGame, 100);
+  return;
+}
+
+      resumed = false;
+      let oldBehavior = JSON.parse(localStorage.getItem("blockBehavior") || "{}");
+      if (oldBehavior.totalMoves) playerBehavior = oldBehavior;
+
+      switchScreen("game");
+      grid.innerHTML = "";
+      gridCells = [];
+      for (let i = 0; i < 64; i++) {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        grid.appendChild(cell);
+        gridCells.push(cell);
+      }
+      score = 0;
+      shapesUsed = 0;
+      updateScore();
+      generateSmartShapes();
+      startMonitor();
+      showAIReaction('lateOpen');
+    }
+
+    function restartGame() {
+      soundEffects.play('buttonClick');
+      clearInterval(monitorInterval);
+      startGame();
+    }
+
+    function updateScore() {
+      scoreboard.textContent = `Score: ${score}`;
+      let smartFactor = 0;
+      if (playerBehavior.avgSpeed && playerBehavior.avgSpeed < 2500) smartFactor += 1;
+      if (playerBehavior.perfectClears >= 3) smartFactor += 1;
+      if (playerBehavior.nearFails === 0 && score > 500) smartFactor += 1;
+      difficultyLevel = 1 + smartFactor;
+    }
+
+    function xyToIndex(x, y) {
+      return y * 8 + x;
+    }
+
+    function canPlace(shape, x, y) {
+      return shape.every(([dx, dy]) => {
+        const gx = x + dx, gy = y + dy;
+        return gx >= 0 && gx < 8 && gy >= 0 && gy < 8 &&
+          !gridCells[xyToIndex(gx, gy)].classList.contains("filled");
+      });
+    }
+
+    function canShapeFitAnywhere(shape) {
+      for (let y = 0; y < 8; y++) {
+        for (let x = 0; x < 8; x++) {
+          if (canPlace(shape, x, y)) return true;
+        }
+      }
+      return false;
+    }
+
+    function rotateShape(shape, times = 1) {
+      let result = shape.map(([x, y]) => [x, y]);
+      for (let t = 0; t < times; t++) {
+        result = result.map(([x, y]) => [y, -x]);
+        const minX = Math.min(...result.map(([x]) => x));
+        const minY = Math.min(...result.map(([_, y]) => y));
+        result = result.map(([x, y]) => [x - minX, y - minY]);
+      }
+      return result;
+    }
+
+    function createShapeElement(shape) {
+      const el = document.createElement("div");
+      el.className = "shape";
+
+      const minX = Math.min(...shape.map(([x]) => x));
+      const minY = Math.min(...shape.map(([_, y]) => y));
+
+      shape.forEach(([x, y]) => {
+        const block = document.createElement("div");
+        block.className = "block";
+        block.style.gridColumn = (x - minX + 1);
+        block.style.gridRow = (y - minY + 1);
+        el.appendChild(block);
+      });
+
+      el.dataset.shape = JSON.stringify(shape);
+      return el;
+    }
+
+    function getRandomWeightedShape() {
+      let filtered = weightedShapes.filter(s => s.shape.length <= (5 + difficultyLevel));
+      let totalWeight = filtered.reduce((sum, s) => sum + s.weight, 0);
+      let rand = Math.random() * totalWeight;
+      for (let s of filtered) {
+        if (rand < s.weight) return s.shape;
+        rand -= s.weight;
+      }
+    }
+
+    function generateSmartShapes() {
+      shapesDiv.innerHTML = "";
+      shapesUsed = 0;
+      shapesInHand = [];
+      let tries = 0;
+      const shape = getRandomWeightedShape();
+
+      while (shapesInHand.length < 3 && tries < 100) {
+        let shape = getRandomWeightedShape();
+        let rotation = Math.floor(Math.random() * 4);
+        shape = rotateShape(shape, rotation);
+
+        if (Math.random() < 0.3 && isLineClearShape(shape)) {
+  shapesInHand.push(shape);
+  continue; // نكمل على طول بدون فحص
+}
+
+function isLineClearShape(shape) {
+  const xs = shape.map(([x, _]) => x);
+  const ys = shape.map(([_, y]) => y);
+  const uniqueX = new Set(xs).size;
+  const uniqueY = new Set(ys).size;
+
+  // شكل مرصوص أفقيًا أو عموديًا (يعني شكله يساعد في المسح)
+  return uniqueY === 1 || uniqueX === 1;
+}
+
+
+        if (canShapeFitAnywhere(shape)) {
+          shapesInHand.push(shape);
+        }
+        tries++;
+      }
+
+      shapesInHand.forEach(shape => {
+        const el = createShapeElement(shape);
+        shapesDiv.appendChild(el);
+
+        el.addEventListener("pointerdown", e => {
+          // في دالة generateSmartShapes() داخل eventListener للـ pointerdown
+el.addEventListener("pointerdown", e => {
+  e.preventDefault();
+  soundEffects.play('shapePick'); // <-- أضف هذا السطر
+  sourceElement = el;
+  // ... باقي الكود كما هو
+});
+          e.preventDefault();
+          sourceElement = el;
+          const rect = el.getBoundingClientRect();
+          const cellSize = gridCells[0].getBoundingClientRect().width;
+          offset.x = e.clientX - rect.left;
+          offset.y = e.clientY - rect.top;
+
+          pointerStartX = e.pageX;
+          pointerStartY = e.pageY;
+
+          floatingStartX = e.pageX;
+          floatingStartY = e.pageY - (cellSize * 4);
+
+          currentShape = shape;
+          floating = el.cloneNode(true);
+          floating.classList.add("floating");
+          floating.style.width = `${cellSize * 4}px`;
+          floating.style.height = `${cellSize * 4}px`;
+          floating.style.left = (floatingStartX - offset.x) + "px";
+          floating.style.top = (floatingStartY - offset.y) + "px";
+
+          el.style.visibility = "hidden";
+          document.body.appendChild(floating);
+        });
+      });
+    }
+
+    function placeShape(shape, x, y) {
+      shape.forEach(([dx, dy]) => {
+        gridCells[xyToIndex(x+dx, y+dy)].classList.add("filled");
+      });
+      score += shape.length * 10;
+      checkFullLines();
+      updateScore();
+      shapesUsed++;
+
+      let now = Date.now();
+      if (playerBehavior.lastMoveTime) {
+        let delta = now - playerBehavior.lastMoveTime;
+        playerBehavior.totalMoves++;
+        if (delta < 3000) playerBehavior.fastMoves++;
+        else playerBehavior.slowMoves++;
+        playerBehavior.avgSpeed = (playerBehavior.avgSpeed * (playerBehavior.totalMoves - 1) + delta) / playerBehavior.totalMoves;
+      }
+      playerBehavior.lastMoveTime = now;
+
+      if (score > 700 && playerBehavior.fastMoves > playerBehavior.slowMoves) {
+        aiInternalNotes.push(`اللاعب سريع وعدواني... احتمال كبير يوصل لأرقام عالية.`);
+      }
+      if (playerBehavior.nearFails >= 3) {
+        aiInternalNotes.push(`اللاعب بينهار بسهولة... محتاج تحفيز مختلف.`);
+      }
+      if (score > 1000 && playerBehavior.perfectClears > 5) {
+        aiInternalNotes.push(`المهارات بدأت تظهر بوضوح... لازم أرفع التحدي.`)
+      }
+
+      if (shapesUsed >= 3) {
+        generateSmartShapes();
+      }
+    }
+
+
+    function checkFullLines() {
+  let clearedRows = [], clearedCols = [];
+
+  // الكود الحالي لفحص الصفوف المكتملة
+  for (let row = 0; row < 8; row++) {
+    if ([...Array(8)].every((_, col) => gridCells[xyToIndex(col, row)].classList.contains("filled"))) {
+      clearedRows.push(row);
+    }
+  }
+
+  // الكود الحالي لفحص الأعمدة المكتملة
+  for (let col = 0; col < 8; col++) {
+    if ([...Array(8)].every((_, row) => gridCells[xyToIndex(col, row)].classList.contains("filled"))) {
+      clearedCols.push(col);
+    }
+  }
+
+  if (clearedRows.length || clearedCols.length) {
+    const totalCleared = clearedRows.length + clearedCols.length;
+    
+    // إضافة الأصوات هنا ▼▼▼
+    if (totalCleared === 1) {
+      soundEffects.play('lineClear'); // صوت لمسح خط واحد
+    } else {
+      soundEffects.play('comboClear'); // صوت لمسح كومبو (عدة خطوط)
+    }
+    if (totalCleared === 1) {
+  if (soundEffects && soundEffects.play) {
+    soundEffects.play('lineClear');
+  }
+} else {
+  if (soundEffects && soundEffects.play) {
+    soundEffects.play('comboClear');
+  }
+}
+    // الكود الحالي لمسح الخطوط
+    clearedRows.forEach(row => {
+      for (let col = 0; col < 8; col++) {
+        gridCells[xyToIndex(col, row)].classList.remove("filled");
+      }
+    });
+
+    clearedCols.forEach(col => {
+      for (let row = 0; row < 8; row++) {
+        gridCells[xyToIndex(col, row)].classList.remove("filled");
+      }
+    });
+
+    // تحديث النقاط
+    score += totalCleared * 100;
+    updateScore();
+
+    // إظهار رد فعل الذكاء الاصطناعي
+    setTimeout(() => {
+      if (totalCleared >= 2) {
+        showAIReaction('combo');
+      } else {
+        showAIReaction('lineClear');
+      }
+    }, 100);
+  }
+}
+
+    function showGameOver() {
+  clearInterval(monitorInterval);
+  playerBehavior.nearFails++;
+
+  switchScreen("gameover");
+
+  finalScoreDisplay.classList.remove("show", "bounce-in");
+  resumeBtn.style.display = "inline-block";
+  resumeBtn.classList.add("golden-btn");
+  restartBtn.style.display = "none";
+  countdownEl.style.display = "block";
+
+  // نص عاطفي مبطن وجذاب
+  const motivationalMessages = [
+    
+  ];
+  document.getElementById("motivationalText").textContent = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+
+  startResumeCountdown();
+}
+
+
+
+
+function resumeGame() {
+  showRewardedAd();
+}
+
+function showRewardedAd() {
+  alert("🎥 إعلان سيعرض هنا لاحقًا.");
+
+  resumed = true;
+  clearRandomLine();
+  generateSmartShapes();
+  switchScreen("game");
+  startMonitor();
+}
+
+
+
+function showRewardedAd() {
+  // مكان ربط إعلان جوجل AdMob لما تعمل نسخة APK
+  console.log("📺 عرض إعلان المكافآت!");
+
+  resumed = true;
+  clearRandomLine();
+  generateSmartShapes();
+  switchScreen("game");
+  startMonitor();
+}
+
+
+function showRewardedAd() {
+  // ❗ ده مكان ربط إعلان AdMob لما تبني الـ APK
+  console.log("📺 عرض إعلان المكافأة!");
+
+  // حالياً، نكمل اللعب كأن الإعلان اتشاف
+  resumed = true;
+  clearRandomLine();
+  generateSmartShapes();
+  switchScreen("game");
+  startMonitor();
+}
+
+
+
+function showRewardedAdWithCallback(callback) {
+  // هنا مكان ربط إعلان AdMob الحقيقي لاحقًا
+  console.log("📺 عرض إعلان بمكافأة (مع تنفيذ بعده)");
+
+  // دلوقتي بنفترض إنه خلص
+  setTimeout(() => {
+    callback();
+  }, 500); // ممكن تزود وقت العرض لو حبيت تحاكي إعلان أطول
+}
+
+
+
+function generateInsightReport() {
+  const textArea = document.getElementById("insightAiText");
+  const avatar = document.getElementById("insightAiAvatar");
+  const dots = document.querySelector("#insightAiBubble .ai-dots");
+  const shareBtn = document.getElementById("shareInsightBtn");
+  const closeBtn = document.getElementById("closeInsightBtn");
+
+  const b = playerBehavior;
+  const lang = JSON.parse(localStorage.getItem("blockPlayerData"))?.language || 'ar';
+  const rand = arr => arr[Math.floor(Math.random() * arr.length)];
+
+  let message = "";
+
+  if (lang === 'ar') {
+    const opening = [
+      "📘 تحليل سريع بناءً على جولتك الأخيرة...",
+      "🧠 البيضة قعدت تحلل وطلعتلك الكلام ده...",
+      "🎭 كل حركة ليك كانت بتتكلم... اسمع بقى الكلام.",
+      "👁️ خليني أقولك إنت كنت عامل إزاي وانت بتلعب.",
+      "🤖 جولتك الأخيرة فضحتلك حاجات، وأنا جمعتها.",
+      "📊 البيضة سجلت، وده اللي طلع.",
+      "🧩 لعبك قال كتير، وأنا ترجمت الكلام ده في التحليل ده.",
+      "🕵️‍♂️ بصراحة؟ جولتك كانت كنز معلومات.",
+      "🎮 تحليل ع السريع، بس من قلب البيضة.",
+      "💡 مستعد تسمع الحقيقة؟"
+    ];
+
+    const emotion = b.fastMoves > b.slowMoves ? [
+      "بتتحرك بسرعة كأن في حد بيجري وراك 😅",
+      "واضح إنك مش بتفكر كتير قبل ما تتحرك، ويمكن ده جزء من شخصيتك العفوية.",
+      "تحركاتك السريعة بتقول إنك متحمس أو مستعجل دايمًا.",
+      "فيه استعجال باين في كل خطوة، ده ممكن يكون من التوتر أو الحماس.",
+      "السرعة عندك بتخليك تاخد قرارات فورية، حلوة بس مش دايمًا دقيقة.",
+      "بتهرب من التفكير الكتير؟ اللعب بيقول كده.",
+      "السرعة ملحوظة… بس ياترى وراها ثقة ولا قلق؟",
+      "زي ما تكون بتلعب ضد الوقت! فين الراحة؟ 😆",
+      "اللي يشوفك يفكر إنك حافظ الحل… بس يمكن بتجرب؟",
+      "إنت أسرع من البيضة وهي بتتكلم أصلاً 😳"
+    ] : [
+      "واضح إنك بتفكر كويس قبل ما تتحرك… بس أوقات الفرص بتهرب منك.",
+      "الهدوء باين في طريقة لعبك… وده بيقول إنك بتحب التخطيط.",
+      "كل حركة ليك محسوبة… بس أوقات بتحس إنك متردد؟",
+      "التفكير الطويل أوقات بيكون نقطة قوة… وأوقات بيضيع جولات.",
+      "انتبه… الهدوء ده ممكن يخدع، هل هو تركيز ولا تردد؟",
+      "كأنك بتستنى اللحظة الصح كل مرة… احترام ✨",
+      "الهدوء الزيادة ممكن يخليك تتأخر… أو يمكن بتستمتع بالرحلة؟",
+      "واضح إنك بتلعب بعقلك مش بإيدك.",
+      "طريقة لعبك فيها وعي… بس الوعي ساعات بيكون تقيل.",
+      "كأنك بتسمع موسيقى وانت بتحرك، فيك لمسة فنية 🎶"
+    ];
+
+    const risk = b.nearFails >= 3 ? [
+      "كنت على الحافة أكتر من مرة… بتحب التوتر؟ 😅",
+      "بتلعب كأنك في مشهد نهاية فيلم أكشن!",
+      "واضح إنك بتمشي على السلك… وده محتاج أعصاب.",
+      "الخطر بيشدك؟ ولا ده صدفة متكررة؟",
+      "النجاة في اللحظة الأخيرة شكلها عادتك 😂",
+      "بتتأخر في التصرف… وبتنقذ نفسك في آخر ثانية.",
+      "البيضة سجلت: أكتر من مرة كدت تخسر… بس نجيت.",
+      "فيك حاجة بتخليك ما تستسلمش… حتى وانت بتقع.",
+      "كأنك بتحب اللحظات الحرجة… غريب ومثير.",
+      "واضح إنك بتمشي على الحد بين النصر والهزيمة!"
+    ] : [
+      "كنت متماسك… والجولة ماشية تحت سيطرتك.",
+      "تحكمك في اللعب واضح… وعقلك مرتاح.",
+      "ولا لحظة كانت خطرة… ده بيدل على ثقة.",
+      "هدوءك في المواقف يعلّم.",
+      "أنت من الناس اللي تعرف تتصرف قبل ما الأمور تتعقد.",
+      "اللعبة كانت في جيبك تقريبًا.",
+      "برافو… الجولة كانت فيها أمان أكتر من اللازم.",
+      "البيضة شافتك… كنت بتهندل اللعب كأنك بتشرب شاي.",
+      "سيطرتك على الموقف تستحق تصفيق 👏",
+      "واضح إنك ما بتحب الدراما… كل حاجة كانت تحت الكنترول."
+    ];
+
+    const personality = b.perfectClears >= 3 ? [
+      "إبداعك بيظهر لما الدنيا تضيق، وده بيدل على عقل نشيط.",
+      "فيك حاجة تخليك تكمّل وتفاجئنا بحل عبقري.",
+      "عرفت تنفذ كمبو محترم، ده ذكاء مش سهل.",
+      "واضح إنك مش بس بتلعب… إنت بتحلل وبتخطط.",
+      "الحركات النظيفة اللي عملتها بتقول إنك مركز قوي.",
+      "بتعرف تتصرف لما الفرصة تيجي… ده معناه إنك واعي.",
+      "كل Perfect Clear بتقول إنك مش عشوائي.",
+      "عقلك بيشتغل في الخلفية دايمًا… باين جدًا.",
+      "فيك لمسة تكتيكية واضحة.",
+      "البيضة احترمت كمبو زي اللي عملته."
+    ] : [
+      "فيه لخبطة في قراراتك… يمكن مزاج؟ يمكن توتر؟",
+      "واضح إنك بتجرب أكتر ما بتحسب… كويس للتعلّم، بس مش دايمًا.",
+      "الكومبو ماكانش حليفك المرة دي… يمكن المرة الجاية.",
+      "إنت مش بتخطط بعيد… بتحب تمشيها خطوة بخطوة؟",
+      "أداءك متذبذب… بس ده بيحصل لأذكى الناس.",
+      "كأنك كنت بتلعب وانت بتفكر في حاجة تانية؟",
+      "البيضة شافت إنك مركز بس مش دقيق كفاية.",
+      "مافيش تحكم كامل… بس فيه نية واضحة.",
+      "كنت قريب من حلول كويسة… بس التفاصيل هربت منك.",
+      "واضح إنك لسه بتتعلم توازن بين اللعب السريع والدقيق."
+    ];
+    const closing = [
+      "ده تحليل الجولة دي… المرة الجاية تقوللي شخصية تانية؟",
+      "أنا البيضة… وسجلت كل حاجة. الجيم الجاي؟ مفاجأة جديدة.",
+      "كل حركة ليك بتقول حاجة… وأنا هنا أراقب.",
+      "إنت نسخة بتتغير كل جولة… وده أحلى حاجة.",
+      "كل جولة بتكشفلك حاجة جديدة فيك.",
+      "أنا بحللك… والجيم بيطلع اللي جواك.",
+      "استمر… التحليل الجاي هيكون أغرب.",
+      "لو دي كانت مجرد جولة… فإنت لسه مخبيتلي كتير.",
+      "البيضة لسه بتتعلم عنك… بس بدأت أفهمك.",
+      "التحليل خلص… بس اللعبة لسه قدامك كتير."
+    ];
+
+    const jokes = [
+      "لو فيه جائزة لأكتر دماغ معقدة… فـ أنت أول المرشحين 😂",
+      "الجيم ده خلاني أراجع نفسى بصراحة 😵",
+      "حاسس إنك كنت بتلعب وإنت بتغني؟ 🎤",
+      "ماشاء الله على إبداعك… كملت مسح وأنا نايمة 💤",
+      "لو فيه مسلسل عن الجيم ده… كنت هسميه: (اللعب على الحافة).",
+      "عقلك بيشتغل بنظام ويندوز 98؟ ولا إيه؟ 😅",
+      "إنت بتلعب ولا بتكتب شعر؟ كل حركة فيها دراما!",
+      "أنا بدأت أقلق من ذكائك الصامت ده 😳",
+      "لو في مدرسة للذكاء العشوائي… تبقى أنت المدرّس.",
+      "أنت مزيج غريب بين عبقرية وبهلوان 🤹"
+    ];
+    message = `${rand(opening)}\n\n${rand(emotion)}\n${rand(risk)}\n${rand(personality)}\n\n${rand(closing)}\n\n🥚 ${rand(jokes)}`;
+  } else {
+    const opening = [
+      "📘 Quick insight based on your last round...",
+      "🧠 The Egg has been observing you, here's what it found...",
+      "🎭 Every move tells a story. Here's yours...",
+      "👁️ Let me tell you what kind of player you were this time.",
+      "🤖 Your last round said a lot... and I took notes.",
+      "📊 Here's the result of what the Egg saw.",
+      "🧩 You revealed more than you think. Let's analyze it.",
+      "🕵️‍♂️ No escape... this round was rich with signs.",
+      "🎮 Short analysis, big discoveries.",
+      "💡 Ready for some honest truth?"
+    ];
+
+    const emotion = b.fastMoves > b.slowMoves ? [
+      "You moved like something was chasing you 😅",
+      "You seemed to react without thinking much — spontaneous or anxious?",
+      "Fast decisions, quick moves — are you always this hyped?",
+      "Your speed says urgency. Excited or overwhelmed?",
+      "You acted before thinking — bold or just impulsive?",
+      "Rushing through moves... trying to escape your own thoughts maybe?",
+      "High speed detected — confidence or hidden panic?",
+      "You played like there was a bomb timer 😆",
+      "That looked fast... but were you sure or just winging it?",
+      "You're faster than me typing this report 😳"
+    ] : [
+      "Your calm approach was noticeable — smart or too slow?",
+      "You thought through everything… maybe too much.",
+      "Every move was calculated — are you always this careful?",
+      "Slow and steady… but did you miss some chances?",
+      "That kind of focus can be a strength… or a trap.",
+      "Your brain was clearly ahead of your fingers.",
+      "Deep thinking detected… but don’t overdo it.",
+      "You moved like you were meditating… zen mode on 🧘",
+      "Your moves felt like solving a puzzle piece by piece.",
+      "Methodical, precise — impressive or hesitant?"
+    ];
+
+    const risk = b.nearFails >= 3 ? [
+      "You almost lost it — multiple times. Drama much? 😅",
+      "High tension, high stakes. You love chaos, huh?",
+      "You walked the edge like it was a runway.",
+      "Near-deaths everywhere… but you survived. Barely.",
+      "You like danger… or it likes you.",
+      "Always last second saves — are you lucky or a magician?",
+      "Surviving close calls… kind of your thing?",
+      "You’re flirting with failure like it’s a game 😬",
+      "A thrill-seeker in disguise? This round says yes.",
+      "The Egg saw your nerves. Respect... and concern."
+    ] : [
+      "Solid performance — barely a threat in sight.",
+      "You stayed cool under pressure. Veteran style.",
+      "Nothing shook you… that's discipline.",
+      "You made it look easy — no panic at all.",
+      "Everything felt controlled… were you even trying?",
+      "Your moves were stable and focused.",
+      "Smooth, composed — textbook play.",
+      "You owned that round. Quiet power vibes.",
+      "This round? You drove it like a pro.",
+      "No signs of collapse… that's rare and strong."
+    ];
+
+    const personality = b.perfectClears >= 3 ? [
+      "You had some genius moments… flashes of brilliance.",
+      "Perfect clears don’t lie — there’s skill in that brain.",
+      "You know how to strike at the right moment.",
+      "You're not just playing — you're calculating.",
+      "That wasn’t luck. That was awareness and timing.",
+      "You see patterns others miss. That’s talent.",
+      "Precision like that is rare — well done.",
+      "Your instincts are solid and sharp.",
+      "You played like someone who’s been here before.",
+      "Brains over brute force — confirmed."
+    ] : [
+      "There was chaos in your choices. Honest.",
+      "You experimented a lot… maybe too much.",
+      "Lack of combos this time — distracted?",
+      "You were reacting more than planning.",
+      "This wasn’t your most focused round.",
+      "Your logic wandered off a few times.",
+      "Messy play. Maybe you needed coffee? ☕",
+      "Effort was there, but execution fell apart.",
+      "You aimed for impact but hit confusion.",
+      "Great energy, but lacking a strategy."
+    ];
+
+    const closing = [
+      "That’s just your mindset in this round — next time might shock me more.",
+      "The Egg is watching… and learning.",
+      "Every round peels a new layer of you.",
+      "You’re evolving, and I’m recording everything 👀",
+      "Your mood changed mid-game… I saw that.",
+      "Let’s see how your next round feels… I’ll be back.",
+      "You’re unpredictable — I love that.",
+      "I’m not judging. Just… observing… deeply.",
+      "You’ve got style. Messy or not, it’s yours.",
+      "This isn’t over. It’s just the beginning."
+    ];
+
+    const jokes = [
+      "I need therapy after reading your gameplay 😅",
+      "That round was a rollercoaster — and I wasn’t strapped in!",
+      "You play like you're texting and skydiving. At the same time.",
+      "Your brain is either a genius… or a prankster.",
+      "Your round felt like a jazz solo. Beautiful chaos 🎷",
+      "Do you even know what you’re doing? Because I don’t 😵",
+      "You stress me out, and I’m a robot!",
+      "Keep going… just warn me next time 😬",
+      "If confusion was a skill, you’d be ranked #1 🏆",
+      "I laughed. I cried. I questioned reality. Thanks."
+    ];
+
+    message = `${rand(opening)}\n\n${rand(emotion)}\n${rand(risk)}\n${rand(personality)}\n\n${rand(closing)}\n\n🥚 ${rand(jokes)}`;
+  }
+
+  textArea.textContent = "";
+  dots.style.display = "flex";
+  avatar.src = "assets/ai_thinking.png";
+
+  setTimeout(() => {
+    dots.style.display = "none";
+    let i = 0;
+    function typeChar() {
+      if (i < message.length) {
+        textArea.textContent += message[i++];
+        setTimeout(typeChar, 35);
+      } else {
+        shareBtn.classList.remove("hidden");
+        closeBtn.classList.remove("hidden");
+        avatar.src = "assets/ai_smile.png";
+        avatar.classList.add("bounce");
+      }
+    }
+    typeChar();
+  }, 1000);
+}
+
+
+function showInsightReport() {
+  showRewardedAdWithCallback(() => {
+    document.getElementById("gameover").classList.remove("active");
+    document.getElementById("insightScreen").classList.remove("hidden");
+    generateInsightReport();
+  });
+}
+
+
+    function showAIMessage(text) {
+      const aiText = document.getElementById("aiText");
+      const heatBar = document.getElementById("aiHeatBar");
+      aiText.textContent = text;
+      aiText.classList.remove("show");
+      heatBar.classList.remove("active");
+      void aiText.offsetWidth;
+      void heatBar.offsetWidth;
+      aiText.classList.add("show");
+      heatBar.classList.add("active");
+
+      setTimeout(() => {
+        aiText.classList.remove("show");
+        heatBar.classList.remove("active");
+      }, 3500);
+    }
+
+    function clearRandomLine() {
+      const isRow = Math.random() < 0.5;
+      const index = Math.floor(Math.random() * 8);
+      if (isRow) {
+        for (let col = 0; col < 8; col++) {
+          gridCells[xyToIndex(col, index)].classList.remove("filled");
+        }
+      } else {
+        for (let row = 0; row < 8; row++) {
+          gridCells[xyToIndex(index, row)].classList.remove("filled");
+        }
+      }
+    }
+
+    function startMonitor() {
+      clearInterval(monitorInterval);
+      monitorInterval = setInterval(() => {
+        const activeShapes = Array.from(shapesDiv.children).map(el => JSON.parse(el.dataset.shape || "[]"));
+        const playable = activeShapes.some(shape => canShapeFitAnywhere(shape));
+        if (!playable) {
+          clearInterval(monitorInterval);
+          showGameOver();
+        
+          if (Math.random() < 0.07 && aiInternalNotes.length > 0) {
+            const secret = aiInternalNotes[Math.floor(Math.random() * aiInternalNotes.length)];
+            showAIMessage(`🤖 (ملاحظة ذكية): ${secret}`);
+          }
+        }
+      }, 300);
+    }
+
+    function clearPreview() {
+      gridCells.forEach(cell => {
+        cell.classList.remove("preview");
+        cell.classList.remove("line-clear-preview");
+      });
+    }
+
+    function showPreview(shape, x, y) {
+      clearPreview();
+      const previewIndexes = [];
+
+      shape.forEach(([dx, dy]) => {
+        const gx = x + dx;
+        const gy = y + dy;
+        if (gx >= 0 && gx < 8 && gy >= 0 && gy < 8) {
+          const index = xyToIndex(gx, gy);
+          previewIndexes.push(index);
+          gridCells[index].classList.add("preview");
+        }
+      });
+
+      for (let row = 0; row < 8; row++) {
+        if ([...Array(8)].every((_, col) => {
+          const i = xyToIndex(col, row);
+          return gridCells[i].classList.contains("filled") || previewIndexes.includes(i);
+        })) {
+          for (let col = 0; col < 8; col++) {
+            gridCells[xyToIndex(col, row)].classList.add("line-clear-preview");
+          }
+        }
+      }
+
+      for (let col = 0; col < 8; col++) {
+        if ([...Array(8)].every((_, row) => {
+          const i = xyToIndex(col, row);
+          return gridCells[i].classList.contains("filled") || previewIndexes.includes(i);
+        })) {
+          for (let row = 0; row < 8; row++) {
+            gridCells[xyToIndex(col, row)].classList.add("line-clear-preview");
+          }
+        }
+      }
+    }
+
+    window.addEventListener("pointermove", e => {
+      if (floating) {
+        const cellSize = gridCells[0].getBoundingClientRect().width;
+        const moveX = (e.pageX - pointerStartX) * 1.3;
+        const moveY = (e.pageY - pointerStartY) * 1.3;
+
+        floating.style.left = (floatingStartX + moveX - offset.x) + "px";
+        floating.style.top = (floatingStartY + moveY - offset.y) + "px";
+
+        const rect = grid.getBoundingClientRect();
+        const floatRect = floating.getBoundingClientRect();
+        const gridX = Math.round((floatRect.left - rect.left) / (rect.width / 8));
+        const gridY = Math.round((floatRect.top - rect.top) / (rect.height / 8));
+
+        if (canPlace(currentShape, gridX, gridY)) {
+          showPreview(currentShape, gridX, gridY);
+        } else {
+          clearPreview();
+        }
+      }
+    });
+
+    window.addEventListener("pointerup", e => {
+      if (!floating || !currentShape) return;
+      const rect = grid.getBoundingClientRect();
+      const floatRect = floating.getBoundingClientRect();
+      const gridX = Math.round((floatRect.left - rect.left) / (rect.width / 8));
+      const gridY = Math.round((floatRect.top - rect.top) / (rect.height / 8));
+
+      if (canPlace(currentShape, gridX, gridY)) {
+        placeShape(currentShape, gridX, gridY);
+        sourceElement.remove();
+      } else {
+        sourceElement.style.visibility = "visible";
+      }
+
+      floating.remove();
+      floating = null;
+      currentShape = null;
+      sourceElement = null;
+      clearPreview();
+    });
+
+    let playerData = {
+      language: '',
+      gender: '',
+      age: ''
+    };
+
+    function chooseLanguage(lang) {
+  playerData.language = lang;
+  localStorage.setItem("blockPlayerData", JSON.stringify(playerData));
+  document.getElementById("langButtons").style.display = "none";
+  document.getElementById("step2").style.display = "block";
+
+  if(lang === 'en') {
+    document.getElementById("welcomeText").innerText = "🤖 Hello! Let me know you better!";
+    document.getElementById("genderText").innerText = "👤 Are you a boy or a girl?";
+    document.querySelectorAll("#step2 button")[0].innerText = "🚹 Boy";
+    document.querySelectorAll("#step2 button")[1].innerText = "🚺 Girl";
+
+    document.getElementById("ageText").innerText = "🎂 How old are you?";
+    document.querySelectorAll("#step3 button")[0].innerText = "🔢 Under 18";
+    document.querySelectorAll("#step3 button")[1].innerText = "🔢 Above 18";
+
+    document.querySelector("#finalStep button").innerText = "🚀 Let's Start The Journey!";
+  } else {
+    document.getElementById("welcomeText").innerText = "🤖 أهلاً! خلينا نتعرف عليك شوية!";
+    document.getElementById("genderText").innerText = "👤 إنت ولد ولا بنت؟";
+    document.querySelectorAll("#step2 button")[0].innerText = "🚹 ولد";
+    document.querySelectorAll("#step2 button")[1].innerText = "🚺 بنت";
+
+    document.getElementById("ageText").innerText = "🎂 عمرك أقل من 18 ولا أكتر؟";
+    document.querySelectorAll("#step3 button")[0].innerText = "🔢 أقل من 18";
+    document.querySelectorAll("#step3 button")[1].innerText = "🔢 أكبر من 18";
+
+    document.querySelector("#finalStep button").innerText = "🚀 يلا نبدأ الرحلة!";
+  }
+
+  applyLanguage(); // ← سطر مهم جداً لضمان ترجمة باقي الواجهة
+  sounds.click.currentTime = 0;
+sounds.click.play();
+
+}
+
+
+    function chooseGender(gender) {
+      playerData.gender = gender;
+      localStorage.setItem("blockPlayerData", JSON.stringify(playerData));
+      document.getElementById("step2").style.display = "none";
+      document.getElementById("step3").style.display = "block";
+    }
+
+    function chooseAge(age) {
+  playerData.age = age;
+  localStorage.setItem("blockPlayerData", JSON.stringify(playerData));
+
+  // 👇 بدل ما يظهر الزرار، نشغل الدالة مباشرة
+  // document.getElementById("step3").style.display = "none";
+  // document.getElementById("finalStep").style.display = "block";
+
+  finishWelcome(); // ← كده ننتقل فورًا إلى شاشة الافتار
+}
+
+
+    function finishWelcome() {
+  localStorage.setItem("blockPlayerData", JSON.stringify(playerData));
+  reloadAIResponses();
+
+  function startAvatarIntroduction() {
+  const aiText = document.getElementById("introAiText");
+  const aiDots = document.querySelector("#avatarIntroScreen .ai-dots");
+  const avatarImg = document.getElementById("introAiAvatar");
+  
+  const savedData = JSON.parse(localStorage.getItem("blockPlayerData")) || {};
+  const lang = savedData.language || "ar";
+  const gender = savedData.gender || "male";
+  
+  let message = "";
+
+  if (lang === "ar") {
+    if (gender === "male") {
+      message = "أهلاً بيك!\nأنا بيضة البطريق الزرقاء المزرقشة... ذكاء اصطناعي على مزاجي فاخر من الآخر.\nمهمتي البسيطة: أخليك تطفش وتمسح اللعبة!";
+    } else {
+      message = "أهلاً بيكي!\nأنا بيضة البطريق الزرقاء المزرقشة... ذكاء اصطناعي على مزاجي فاخر من الآخر.\nمهمتي اللذيذة: أخليكي تزهقي وتمسحي اللعبة!";
+    }
+  } else if (lang === "en") {
+    if (gender === "male") {
+      message = "Hey there!\nI'm the Blue Penguin Egg... a sarcastic piece of AI made just to mess with you.\nMy simple mission: Make you rage quit and delete the game!";
+    } else {
+      message = "Hey girl!\nI'm the Blue Penguin Egg... a sarcastic piece of AI crafted just to drive you crazy.\nMy sweet mission: Make you rage quit and uninstall the game!";
+    }
+  }
+
+  aiText.textContent = "";
+  aiDots.style.display = "flex"; 
+
+  setTimeout(() => {
+    aiDots.style.display = "none"; 
+
+    let charIndex = 0;
+    function typeNextChar() {
+      if (charIndex < message.length) {
+        aiText.textContent += message[charIndex];
+        charIndex++;
+        setTimeout(typeNextChar, 40); // سرعة الكتابة
+      } else {
+        
+        setTimeout(() => {
+  avatarImg.src = "assets/ai_angry.png";
+  avatarImg.classList.add("shake");
+
+  // 👇 إنشاء زرار "يلا نبدأ الرحلة"
+  const startBtn = document.createElement("button");
+  startBtn.innerText = lang === "ar" ? "🎮 يلا نبدأ الرحلة!" : "🎮 Let's Start!";
+  startBtn.className = "welcome-btn";
+  startBtn.style.marginTop = "25px";
+  startBtn.onclick = () => {
+    document.getElementById("avatarIntroScreen").classList.add("hidden");
+    switchScreen("menu");
+  };
+
+  document.getElementById("avatarWrapper").appendChild(startBtn);
+}, 2000);
+
+      }
+    }
+
+    typeNextChar();
+  }, 1200);
+}
+
+
+
+  // ❗ نعرض رسالة تحميل لطيفة
+  document.getElementById("welcomeScreen").innerHTML = `
+    <div class="welcome-card">
+      <p id="loadingText">🤖 جاري التحضير لمغامرتك...</p>
+      <div id="loadingAvatar" style="margin-top:20px;">
+        <div class="bubble-inner">
+          <img id="aiAvatarLoading" src="assets/ai_thinking.png" alt="AI" />
+          <div class="ai-dots">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // نبدأ فحص التحميل
+  const checkReady = setInterval(() => {
+    if (window.aiReady) {
+      clearInterval(checkReady);
+      document.getElementById("welcomeScreen").style.display = "none";
+document.getElementById("avatarIntroScreen").classList.remove("hidden");
+startAvatarIntroduction();
+
+    }
+  }, 100);
+}
+
+
+
+
+
+    function showPlayerStats() {
+      soundEffects.play('buttonClick');
+      let savedData = JSON.parse(localStorage.getItem("blockPlayerData")) || {};
+      let lang = savedData.language || 'ar';
+      let t = applyLanguageText(lang);
+      
+      let highestScore = localStorage.getItem("blockHighestScore") || 0;
+      let lastScore = localStorage.getItem("blockLastScore") || 0;
+      let playCount = localStorage.getItem("blockPlayCount") || 0;
+
+      let statsHTML = `
+        ${t.genderLabel}: ${savedData.gender === 'male' ? (lang === 'ar' ? 'ولد' : 'Boy') : (lang === 'ar' ? 'بنت' : 'Girl')} 
+        <button class="btn" style="padding:5px 10px; font-size:0.9rem;" onclick="changeGender()">${t.change}</button><br>
+
+        ${t.ageLabel}: ${savedData.age === 'under18' ? (lang === 'ar' ? 'أقل من 18' : 'Under 18') : (lang === 'ar' ? 'أكبر من 18' : 'Above 18')}
+        <button class="btn" style="padding:5px 10px; font-size:0.9rem;" onclick="changeAge()">${t.change}</button><br>
+
+        ${t.langLabel}: ${lang === 'ar' ? 'العربية' : 'English'}
+        <button class="btn" style="padding:5px 10px; font-size:0.9rem;" onclick="changeLanguage()">${t.change}</button><br>
+
+        ${t.highScore}: ${highestScore}<br>
+        ${t.lastScore}: ${lastScore}<br>
+        ${t.playCount}: ${playCount}<br>
+        ${gameTranslations[lang].levelMessage}
+      `;
+
+      document.getElementById("statsContent").innerHTML = statsHTML;
+      document.getElementById("playerStats").style.display = "flex";
+    }
+
+    function changeGender() {
+  let data = JSON.parse(localStorage.getItem("blockPlayerData")) || {};
+  data.gender = (data.gender === 'male') ? 'female' : 'male';
+  localStorage.setItem("blockPlayerData", JSON.stringify(data));
+  reloadAIResponses(); // 👈 تضيف دي
+  showPlayerStats();
+}
+
+function changeAge() {
+  let data = JSON.parse(localStorage.getItem("blockPlayerData")) || {};
+  data.age = (data.age === 'under18') ? 'above18' : 'under18';
+  localStorage.setItem("blockPlayerData", JSON.stringify(data));
+  reloadAIResponses(); // 👈 تضيف دي
+  showPlayerStats();
+}
+
+function changeLanguage() {
+  let data = JSON.parse(localStorage.getItem("blockPlayerData")) || {};
+  data.language = (data.language === 'ar') ? 'en' : 'ar';
+  localStorage.setItem("blockPlayerData", JSON.stringify(data));
+  reloadAIResponses(); // 👈 تضيف دي
+  showPlayerStats();
+  applyLanguage();
+}
+
+
+    function closeStats() {
+      if (window.soundEffects) soundEffects.play('button');
+      document.getElementById("playerStats").style.display = "none";
+    }
+
+    function getAIPersonalMessage(score) {
+      const lang = JSON.parse(localStorage.getItem("blockPlayerData"))?.language || 'ar';
+      
+      if(score < 100) return lang === 'ar' ? "لسه بتبدأ الرحلة! 🚀" : "Just starting! 🚀";
+      if(score < 500) return lang === 'ar' ? "أداء جميل! 💪 استمر." : "Good performance! 💪 Keep going.";
+      if(score < 1000) return lang === 'ar' ? "إنت محترف! 🔥" : "You're a pro! 🔥";
+      return gameTranslations[lang].levelMessage;
+    }
+
+    function applyLanguage() {
+      const saved = JSON.parse(localStorage.getItem("blockPlayerData")) || {};
+      const lang = saved.language || "ar";
+      const t = gameTranslations[lang];
+
+      document.querySelector(".game-title").textContent = "Block Puzzle AI";
+      document.querySelector(".start-btn").textContent = t.startBtn;
+      document.querySelector(".stats-btn").textContent = t.statsBtn;
+      document.getElementById("shareInsightBtn").textContent = lang === "ar"
+  ? "🔗 شارك التحليل مع صحابك"
+  : "🔗 Share Insight";
+
+document.getElementById("closeInsightBtn").textContent = lang === "ar"
+  ? "🏁 كفاية تحليل.. نرجع؟"
+  : "🏁 Enough insight.. go back?";
+
+      document.getElementById("insightBtn").textContent = lang === "ar"
+  ? "📘 تقرير حالتك النفسية"
+  : "📘 AI Insight Report";
+
+      document.getElementById("scoreboard").textContent = t.scoreText + score;
+      document.querySelector("#gameover h1").textContent = t.gameOver;
+      document.getElementById("resumeBtn").textContent = t.resumeBtn;
+      document.getElementById("restartBtn").textContent = t.restartBtn;
+      document.getElementById("countdown").textContent = t.countdownText;
+      document.getElementById("statsText").textContent = t.statsTitle;
+      document.getElementById("backBtn").textContent = t.backBtn;
+
+      if (document.getElementById("welcomeScreen").style.display !== "none") {
+        chooseLanguage(lang);
+      }
+    }
+
+    function shareInsight() {
+  const report = document.getElementById("insightAiText").textContent;
+  if (navigator.share) {
+    navigator.share({
+      title: "تحليل البيضة 🧠",
+      text: report,
+    }).then(() => {
+      console.log("✅ تم مشاركة التحليل");
+    }).catch(err => {
+      alert("❌ فشل في المشاركة: " + err);
+    });
+  } else {
+    alert("المشاركة غير مدعومة في هذا المتصفح.");
+  }
+}
+
+
+function closeInsight() {
+  document.getElementById("insightScreen").classList.add("hidden");
+  switchScreen("menu");
+}
+
+
+
+
+    function applyLanguageText(lang) {
+      return {
+        genderLabel: lang === 'ar' ? "👤 النوع" : "👤 Gender",
+        ageLabel: lang === 'ar' ? "🎂 السن" : "🎂 Age",
+        langLabel: lang === 'ar' ? "🌍 اللغة" : "🌍 Language",
+        highScore: lang === 'ar' ? "🏆 أعلى نتيجة" : "🏆 High Score",
+        lastScore: lang === 'ar' ? "🎯 آخر نتيجة" : "🎯 Last Score",
+        playCount: lang === 'ar' ? "🔥 مرات اللعب" : "🔥 Play Count",
+        aiMessage: lang === 'ar' ? "💡 المساعد الذكي" : "💡 Smart Assistant",
+        change: lang === 'ar' ? "تغيير" : "Change"
+      };
+    }
+
+    let idleTimer, idleRepeater;
+    function resetIdleTimer() {
+      clearTimeout(idleTimer);
+      clearInterval(idleRepeater);
+
+      idleTimer = setTimeout(() => {
+        showAIReaction("idle");
+        idleRepeater = setInterval(() => {
+          showAIReaction("idle");
+        }, 15000);
+      }, 12000);
+    }
+
+    ["pointerdown", "pointermove", "keydown"].forEach(evt =>
+      window.addEventListener(evt, resetIdleTimer)
+    );
+    resetIdleTimer();
+
+    function backToMenu() {
+      soundEffects.play('buttonClick');
+      clearInterval(monitorInterval);
+      switchScreen("menu");
+    }
+    let countdownTimer;
+let countdownSeconds = 5;
+
+function startResumeCountdown() {
+  countdownSeconds = 5;
+  countdownEl.textContent = `Or wait ${countdownSeconds} seconds...`;
+  countdownEl.classList.add("countdown-animate");
+
+  countdownTimer = setInterval(() => {
+    countdownSeconds--;
+    countdownEl.textContent = `Or wait ${countdownSeconds} seconds...`;
+
+    if (countdownSeconds <= 0) {
+      clearInterval(countdownTimer);
+
+      // نهاية المهلة بدون ضغط
+      resumeBtn.style.display = "none";
+      countdownEl.style.display = "none";
+      
+
+      finalScoreDisplay.textContent = `Score: ${score}`;
+      finalScoreDisplay.classList.add("show", "bounce-in");
+      restartBtn.style.display = "inline-block";
+    }
+  }, 1000);
+}
+
+
+
+    function getRandomAIResponse(eventType) {
+  if (typeof aiResponses !== "undefined" && aiResponses[eventType] && aiResponses[eventType].length > 0) {
+    const responses = aiResponses[eventType];
+    const randomIndex = Math.floor(Math.random() * responses.length);
+    console.log("تم اختيار جملة:", responses[randomIndex]);
+    return responses[randomIndex];
+  }
+  console.log("مفيش جمل متاحة للحدث:", eventType);
+  return "";
+}
+
+
+function showReactionMessage(message) {
+  soundEffects.play('bubbleAppear'); // <-- أضف هذا السطر
+  const aiBubble = document.getElementById("aiBubble");
+  const aiBoard = document.getElementById("aiBoard");
+  const aiText = document.getElementById("aiText");
+  const heatBar = document.getElementById("aiHeatBar");
+  const aiDots = document.querySelector(".ai-dots");
+
+  aiText.textContent = "";
+  aiDots.style.display = "flex"; // اظهار النقط اللي بتتحرك
+
+  aiBubble.classList.remove("hidden");
+  aiBoard.classList.remove("hidden");
+  aiBubble.classList.add("show");
+  aiBoard.classList.add("show");
+  aiText.classList.remove("hidden");
+  aiText.classList.add("show");
+
+  // Reset and animate the heat bar
+  heatBar.style.width = "100%";
+  heatBar.style.transition = "none";
+  void heatBar.offsetWidth;
+  heatBar.style.transition = "width 3s linear";
+  heatBar.style.width = "0%";
+
+  // بعد ثانية من التفكير، يبدأ يكتب الجملة
+  setTimeout(() => {
+    aiDots.style.display = "none"; // اخفاء النقط
+    let charIndex = 0;
+    function typeNextChar() {
+      if (charIndex < message.length) {
+        aiText.textContent += message[charIndex];
+        charIndex++;
+        setTimeout(typeNextChar, 40); // سرعة الحرف
+      }
+    }
+    typeNextChar();
+  }, 1000); // وقت التفكير قبل يبدأ يكتب
+
+  // Hide after 3.5 seconds
+  setTimeout(() => {
+    aiBubble.classList.add("hide");
+    aiBoard.classList.add("hide");
+    aiText.classList.remove("show");
+
+    setTimeout(() => {
+      aiBubble.classList.remove("show", "hide");
+      aiBoard.classList.remove("show", "hide");
+      aiBubble.classList.add("hidden");
+      aiBoard.classList.add("hidden");
+      aiText.classList.add("hidden");
+
+      processMessageQueue();
+    }, 500);
+  }, 3500);
+}
+
+
+
+
+function startAvatarBlink() {
+  const avatarImg = document.getElementById("aiAvatar");
+  setInterval(() => {
+    avatarImg.classList.add("blink");
+    setTimeout(() => {
+      avatarImg.classList.remove("blink");
+    }, 200); // مدة الرمش
+  }, 4000); // كل 4 ثواني رمشة
+}
+
+startAvatarBlink();
+window.allAIResponses = {}; // مكان تخزين كل الجمل
+
+function loadAllAIResponses(callback) {
+  const configs = [
+    'ar_male_under18', 'ar_male_above18', 'ar_female_under18', 'ar_female_above18',
+    'en_male_under18', 'en_male_above18', 'en_female_under18', 'en_female_above18'
+  ];
+
+  let loadedCount = 0;
+
+  configs.forEach(config => {
+    const script = document.createElement('script');
+    script.src = `ai_responses/aiResponses_${config}.js`;
+    script.onload = function() {
+      console.log(`✅ ملف aiResponses_${config} اتحمل`);
+      window.allAIResponses[config] = window.tempAIResponses;
+      loadedCount++;
+      if (loadedCount === configs.length) {
+        console.log("✅✅✅ كل ملفات الجمل اتحملت بنجاح!");
+        callback(); // لما كل الملفات تتحمل شغل الكولباك
+      }
+    };
+    document.body.appendChild(script);
+  });
+}
+
+window.onload = () => {
+  loadAllAIResponses(() => {
+    reloadAIResponses();
+    let savedData = JSON.parse(localStorage.getItem("blockPlayerData"));
+    if (savedData && savedData.language) {
+      document.getElementById("welcomeScreen").style.display = "none";
+      applyLanguage();
+    }
+  });
+}
+
+
+
+  </script>
+</body>
+</html>
