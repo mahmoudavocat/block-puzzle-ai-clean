@@ -2703,9 +2703,16 @@ const SoundManager = {
     };
 
     for (let key in files) {
-      const audio = new Audio(files[key]);
-      audio.preload = 'auto';
-      this.sounds[key] = audio;
+     const audio = new Audio(files[key]);
+audio.preload = 'auto';
+audio.load();
+audio.volume = 0;
+audio.play().then(() => {
+  audio.pause();
+  audio.currentTime = 0;
+}).catch(() => {});
+this.sounds[key] = audio;
+
        // 👇 التهيئة الصوتية لتجهيز الـ buffer
   audio.play().then(() => {
     audio.pause();
@@ -2716,16 +2723,23 @@ const SoundManager = {
     console.log("🔊 الأصوات تم تحميلها");
   },
 
-  play(name) {
-    const s = this.sounds[name];
-    if (s) {
-      s.pause();      // ← ضروري لو شُغل قبل كده
+ play(name) {
+  if (!isSoundOn) return; // ✅ تحقق من حالة الصوت أولاً
+
+  const s = this.sounds[name];
+  if (s) {
+    try {
+      s.pause();
       s.currentTime = 0;
-      s.play().catch(err => {
+      s.play().catch((err) => {
         console.warn("🔇 خطأ تشغيل الصوت:", name, err);
       });
+    } catch (err) {
+      console.warn("❌ خطأ في تشغيل الصوت:", name, err);
     }
   }
+}
+
 };
 
   </script>
