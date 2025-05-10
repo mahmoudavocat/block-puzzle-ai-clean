@@ -2723,19 +2723,25 @@ const SoundManager = {
       bubbleAppear: 'assets/sounds/bubble-appear.mp3',
      
     };
+for (let key in files) {
+ const audio = new Audio(files[key]);
+audio.preload = 'auto';
+audio.load();
 
-    for (let key in files) {
-      const audio = new Audio(files[key]);
-      audio.preload = 'auto';
-      this.sounds[key] = audio;
-    
+// ✅ نسخة تهيئة مستقلة
+const warmUp = new Audio(files[key]);
+warmUp.volume = 0.001;
+warmUp.play().then(() => {
+  warmUp.pause();
+  warmUp.remove(); // نحذفها بعد التسخين
+}).catch(() => {});
 
-       // 👇 التهيئة الصوتية لتجهيز الـ buffer
+this.sounds[key] = audio; // نحفظ الصوت الأصلي الطبيعي
+
   audio.play().then(() => {
     audio.pause();
-
   }).catch(() => {});
-    }
+}
 
     console.log("🔊 الأصوات تم تحميلها");
   },
