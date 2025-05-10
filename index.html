@@ -2816,6 +2816,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener('DOMContentLoaded', async () => {
   await preloadEverything(); // هنا بنفترض عندك دالة تحميل أصوات/صور
+
+  document.body.addEventListener("touchstart", () => {
+  try {
+    if (
+      typeof SoundManager?.context !== "undefined" &&
+      SoundManager.context.state === "suspended"
+    ) {
+      SoundManager.context.resume().then(() => {
+        console.log("🔊 AudioContext resumed ✅");
+      });
+    }
+
+    // ✅ تشغيل صوت خفيف جدًا للتسخين (يفضّل يكون ملف قصير جدًا)
+    const audioPrime = new Audio("assets/sounds/button-click.mp3");
+    audioPrime.volume = 0; // صامت
+    audioPrime.play().catch(() => {}); // مجرد تشغيل لإجبار التهيئة
+
+  } catch (err) {
+    console.warn("⚠️ فشل تهيئة الصوت:", err);
+  }
+}, { once: true });
+
 document.body.addEventListener("touchstart", () => {
   try {
     if (typeof SoundManager?.context !== "undefined" && SoundManager.context.state === "suspended") {
