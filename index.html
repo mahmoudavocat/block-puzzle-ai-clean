@@ -806,63 +806,50 @@ body {
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <script>
-window.addEventListener("touchstart", () => {
-  const audio = new Audio("assets/sounds/button-click.mp3");
-  audio.volume = 0;
-  audio.play().then(() => audio.pause()).catch(() => {});
-}, { once: true });
-
 window.addEventListener("DOMContentLoaded", async () => {
+
+  // ✅ تفعيل الصوت من أول لمسة
   document.body.addEventListener("touchstart", () => {
-  try {
-    if (
-      typeof SoundManager?.context !== "undefined" &&
-      SoundManager.context.state === "suspended"
-    ) {
+    if (SoundManager.context.state === "suspended") {
       SoundManager.context.resume().then(() => {
-        console.log("🔊 تم تفعيل AudioContext على الموبايل ✅");
+        console.log("🔊 تم تفعيل AudioContext");
+      }).catch(err => {
+        console.warn("❌ فشل تفعيل AudioContext", err);
       });
     }
-  } catch (err) {
-    console.warn("⚠️ فشل تفعيل الصوت:", err);
-  }
-}, { once: true });
-document.addEventListener("DOMContentLoaded", () => {
-  document.body.addEventListener("touchstart", () => {
-    const audio = new Audio("assets/sounds/button-click.mp3");
-    audio.volume = 0;
-    audio.play().then(() => audio.pause()).catch(() => {});
   }, { once: true });
-});
 
+  // ✅ تحميل فعلي وانتظار
   const splash = document.getElementById("splashScreen");
 
-  const MIN_DISPLAY = 2200; // الحد الأدنى لعرض شاشة التحميل
-  const MAX_WAIT = 7000; // الحد الأقصى للتحميل
+  const MIN_DISPLAY = 2200;
+  const MAX_WAIT = 7000;
 
-  // نبدأ المؤقتات
   const waitMinTime = new Promise(res => setTimeout(res, MIN_DISPLAY));
-  const preload = preloadEverything(); // تحميل فعلي
+  const preload = preloadEverything();
+  await SoundManager.loadSounds();
+
   const maxWait = new Promise(res => setTimeout(res, MAX_WAIT));
 
-  // أول ما يخلص التحميل أو الوقت الأقصى – نكمل
   await Promise.race([
     Promise.all([preload, waitMinTime]),
     maxWait
   ]);
 
-  // نكمل طبيعي بعد كده
   splash.classList.add("fade-out");
   setTimeout(() => {
     splash.style.display = "none";
     goToNextScreen();
   }, 700);
+
 });
 
 
 
 // دالة التحميل
 async function preloadEverything() {
+  await SoundManager.loadSounds();
+
   const imagePaths = [
     "assets/ai_default.png",
     "assets/ai_happy.png",
@@ -947,35 +934,6 @@ welcome.style.display = "flex";
 }
 
 
-
-
-  // حل سحري لمنع التباطؤ
-  document.addEventListener('DOMContentLoaded', () => {
-    SoundManager.loadSounds();
-    audio.onloadeddata = () => {
-  console.log(`✅ جاهز: ${files[key]}`);
-};
-
-  const originalPlay = SoundManager.play;
- SoundManager.play = function(name) {
-  if (!isSoundOn) return;
-
-  const s = this.sounds?.[name];
-  if (s) {
-    try {
-      s.currentTime = 0;
-      s.play().catch(() => {});
-    } catch (err) {
-      console.warn("خطأ في تشغيل الصوت:", err);
-    }
-  }
-};
-
-
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(() => {}, { timeout: 1000 });
-    }
-  });
 
 
   // حل نهائي لتحسين الأداء
@@ -2706,55 +2664,45 @@ window.onload = () => {
 // Sound Manager - يدير جميع الأصوات في اللعبة
 const SoundManager = {
   sounds: {},
-  
-  loadSounds() {
-    const files = {
-      buttonClick: 'assets/sounds/button-click.mp3',
-      shapePick: 'assets/sounds/shape-pick.mp3',
-      singleClear: 'assets/sounds/singleClear.mp3',
-      comboClear: 'assets/sounds/combo-clear.mp3',
-      bubbleAppear: 'assets/sounds/bubble-appear.mp3',
-     
-    };
-for (let key in files) {
- const audio = new Audio(files[key]);
-audio.preload = 'auto';
-audio.load();
+  context: new (window.AudioContext || window.webkitAudioContext)(),
+buffers: {}, // لتخزين الأصوات بعد فك تشفيرها
 
-// ✅ نسخة تهيئة مستقلة
-const warmUp = new Audio(files[key]);
-warmUp.volume = 0.001;
-warmUp.play().then(() => {
-  warmUp.pause();
-  warmUp.remove(); // نحذفها بعد التسخين
-}).catch(() => {});
+loadSounds: async function () {
+  const files = {
+    buttonClick: "assets/sounds/button-click.mp3",
+    shapePick: "assets/sounds/shape-pick.mp3",
+    singleClear: "assets/sounds/singleClear.mp3",
+    comboClear: "assets/sounds/combo-clear.mp3",
+    bubbleAppear: "assets/sounds/bubble-appear.mp3"
+  };
 
-this.sounds[key] = audio; // نحفظ الصوت الأصلي الطبيعي
+  const ctx = this.context;
 
-  audio.play().then(() => {
-    audio.pause();
-  }).catch(() => {});
-}
-
-    console.log("🔊 الأصوات تم تحميلها");
-  },
-
- play(name) {
-  if (!isSoundOn) return; // ✅ تحقق من حالة الصوت أولاً
-
-  const s = this.sounds[name];
-  if (s) {
+  for (let key in files) {
     try {
-      s.pause();
-      s.currentTime = 0;
-      s.play().catch((err) => {
-        console.warn("🔇 خطأ تشغيل الصوت:", name, err);
-      });
+      const response = await fetch(files[key]);
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+      this.buffers[key] = audioBuffer;
     } catch (err) {
-      console.warn("❌ خطأ في تشغيل الصوت:", name, err);
+      console.warn("❌ فشل تحميل الصوت:", key, err);
     }
   }
-}
+
+  console.log("✅ الأصوات تم تحميلها وفك تشفيرها");
+},
+
+play: function (name) {
+  if (!isSoundOn) return;
+
+  const buffer = this.buffers?.[name];
+  if (buffer) {
+    const source = this.context.createBufferSource();
+    source.buffer = buffer;
+    source.connect(this.context.destination);
+    source.start(0);
+  }
+},
 
 };
 
