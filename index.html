@@ -812,21 +812,16 @@ const Pan = new Hammer.Pan({ threshold: 5 });
         <button onclick="chooseLanguage('en')" class="welcome-btn">🌍 English</button>
       </div>
       
-      <div id="step2" style="display:none; flex-direction: column; gap: 10px;">
-        <p id="genderText">👤 إنت ولد ولا بنت؟</p>
-        <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-          <button onclick="chooseGender('male')" class="welcome-btn">🚹 ولد</button>
-          <button onclick="chooseGender('female')" class="welcome-btn">🚺 بنت</button>
-        </div>
-      </div>
+     
+<div id="step2" style="display:none; margin-top: 20px;">
+  <p id="genderText">👤 إنت ولد ولا بنت؟</p>
+  <div style="display: flex; gap: 20px; justify-content: center; margin-top: 10px;">
+    <button onclick="chooseGender('male')" class="welcome-btn">🚹 ولد</button>
+    <button onclick="chooseGender('female')" class="welcome-btn">🚺 بنت</button>
+  </div>
+</div>
 
-      <div id="step3" style="display:none; flex-direction: column; gap: 10px;">
-        <p id="ageText">🎂 عمرك أقل من 18 ولا أكتر؟</p>
-        <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-          <button onclick="chooseAge('under18')" class="welcome-btn">🔢 أقل من 18</button>
-          <button onclick="chooseAge('above18')" class="welcome-btn">🔢 أكبر من 18</button>
-        </div>
-      </div>
+      
 
       
       <div id="finalStep" style="display:none;"></div>
@@ -967,13 +962,15 @@ const Pan = new Hammer.Pan({ threshold: 5 });
 
   <div id="aiFlash"></div>
   <script>
- function reloadAIResponses() {
+
+function reloadAIResponses() {
   try {
     const savedData = JSON.parse(localStorage.getItem("blockPlayerData")) || {};
     const lang = savedData.language || "ar";
     const gender = savedData.gender || "male";
-    const age = savedData.age || "under18";
-    const playerType = `${lang}_${gender}_${age}`;
+
+    // نستخدم فقط اللغة + النوع بدون السن
+    const playerType = `${lang}_${gender}`;
 
     console.log("🔁 إعادة تحميل الجمل لـ:", playerType);
 
@@ -996,6 +993,7 @@ const Pan = new Hammer.Pan({ threshold: 5 });
     window.aiReady = false;
   }
 }
+
 
 
 
@@ -1783,6 +1781,7 @@ function generateInsightReport() {
     }
     typeChar();
   }, 1000);
+    startAvatarIntroduction();
 }
 
 
@@ -1937,17 +1936,21 @@ function showInsightReport() {
       clearPreview();
     });
 
-    let playerData = {
-      language: '',
-      gender: '',
-      age: ''
-    };
+   let playerData = {
+  language: '',
+  gender: ''
+};
+
 
     function chooseLanguage(lang) {
   playerData.language = lang;
   localStorage.setItem("blockPlayerData", JSON.stringify(playerData));
-  document.getElementById("langButtons").style.display = "none";
-  document.getElementById("step2").style.display = "block";
+  document.getElementById("step2").style.display = "none";
+document.getElementById("welcomeText").style.display = "block";
+document.getElementById("langButtons").style.display = "none";
+document.getElementById("step2").style.display = "block";
+
+
 
   if(lang === 'en') {
     document.getElementById("welcomeText").innerText = "🤖 Hello! Let me know you better!";
@@ -1977,30 +1980,40 @@ function showInsightReport() {
 }
 
 
-    function chooseGender(gender) {
-      playerData.gender = gender;
-      localStorage.setItem("blockPlayerData", JSON.stringify(playerData));
-      document.getElementById("step2").style.display = "none";
-      document.getElementById("step3").style.display = "block";
-    }
-
-    function chooseAge(age) {
-  playerData.age = age;
+function chooseGender(gender) {
+  playerData.gender = gender;
   localStorage.setItem("blockPlayerData", JSON.stringify(playerData));
 
-  // 👇 بدل ما يظهر الزرار، نشغل الدالة مباشرة
-  // document.getElementById("step3").style.display = "none";
-  // document.getElementById("finalStep").style.display = "block";
+  document.getElementById("welcomeScreen").classList.add("hidden");
+  document.getElementById("avatarIntroScreen").classList.remove("hidden");
 
-  finishWelcome(); // ← كده ننتقل فورًا إلى شاشة الافتار
+  reloadAIResponses();
+
+ reloadAIResponses();
+setTimeout(() => {
+  if (window.aiReady) {
+  showReactionMessage(getAvatarWelcomeMessage());
+
+
+  }
+}, 100);
+
 }
 
 
-    function finishWelcome() {
+
+
+
+ function getAvatarWelcomeMessage() {
   localStorage.setItem("blockPlayerData", JSON.stringify(playerData));
   reloadAIResponses();
 
   function startAvatarIntroduction() {
+    document.getElementById("welcomeScreen").classList.add("hidden");
+document.getElementById("avatarIntroScreen").classList.remove("hidden");
+
+    console.log("🚀 دخلنا فعلاً على startAvatarIntroduction()");
+
   const aiText = document.getElementById("introAiText");
   const aiDots = document.querySelector("#avatarIntroScreen .ai-dots");
   const avatarImg = document.getElementById("introAiAvatar");
@@ -2061,6 +2074,7 @@ function showInsightReport() {
 
     typeNextChar();
   }, 1200);
+
 }
 
 
@@ -2109,8 +2123,7 @@ startAvatarIntroduction();
         ${t.genderLabel}: ${savedData.gender === 'male' ? (lang === 'ar' ? 'ولد' : 'Boy') : (lang === 'ar' ? 'بنت' : 'Girl')} 
         <button class="btn" style="padding:5px 10px; font-size:0.9rem;" onclick="changeGender()">${t.change}</button><br>
 
-        ${t.ageLabel}: ${savedData.age === 'under18' ? (lang === 'ar' ? 'أقل من 18' : 'Under 18') : (lang === 'ar' ? 'أكبر من 18' : 'Above 18')}
-        <button class="btn" style="padding:5px 10px; font-size:0.9rem;" onclick="changeAge()">${t.change}</button><br>
+       
 
         ${t.langLabel}: ${lang === 'ar' ? 'العربية' : 'English'}
         <button class="btn" style="padding:5px 10px; font-size:0.9rem;" onclick="changeLanguage()">${t.change}</button><br>
@@ -2133,13 +2146,7 @@ startAvatarIntroduction();
   showPlayerStats();
 }
 
-function changeAge() {
-  let data = JSON.parse(localStorage.getItem("blockPlayerData")) || {};
-  data.age = (data.age === 'under18') ? 'above18' : 'under18';
-  localStorage.setItem("blockPlayerData", JSON.stringify(data));
-  reloadAIResponses(); // 👈 تضيف دي
-  showPlayerStats();
-}
+
 
 function changeLanguage() {
   let data = JSON.parse(localStorage.getItem("blockPlayerData")) || {};
@@ -2302,7 +2309,10 @@ function startResumeCountdown() {
 
 
 function showReactionMessage(message) {
- if (!document.getElementById("game").classList.contains("active") || document.hidden) {
+ const isGameActive = document.getElementById("game").classList.contains("active");
+const isIntroActive = document.getElementById("avatarIntroScreen").classList.contains("active");
+if (!(isGameActive || isIntroActive) || document.hidden) {
+
   isShowingMessage = false;
   return;
 }
@@ -2381,12 +2391,13 @@ startAvatarBlink();
 window.allAIResponses = {}; // مكان تخزين كل الجمل
 
 function loadAllAIResponses(callback) {
-  const configs = [
-    'ar_male_under18', 'ar_male_above18', 
-    'ar_female_under18', 'ar_female_above18',
-    'en_male_under18', 'en_male_above18',
-    'en_female_under18', 'en_female_above18'
-  ];
+ const configs = [
+  'ar_male',
+  'ar_female',
+  'en_male',
+  'en_female'
+];
+
 
   let loadedCount = 0;
   const totalToLoad = configs.length;
