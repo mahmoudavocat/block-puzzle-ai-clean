@@ -806,6 +806,11 @@ body {
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <script>
+window.addEventListener("touchstart", () => {
+  const audio = new Audio("assets/sounds/button-click.mp3");
+  audio.volume = 0;
+  audio.play().then(() => audio.pause()).catch(() => {});
+}, { once: true });
 
 window.addEventListener("DOMContentLoaded", async () => {
   document.body.addEventListener("touchstart", () => {
@@ -822,6 +827,13 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.warn("⚠️ فشل تفعيل الصوت:", err);
   }
 }, { once: true });
+document.addEventListener("DOMContentLoaded", () => {
+  document.body.addEventListener("touchstart", () => {
+    const audio = new Audio("assets/sounds/button-click.mp3");
+    audio.volume = 0;
+    audio.play().then(() => audio.pause()).catch(() => {});
+  }, { once: true });
+});
 
   const splash = document.getElementById("splashScreen");
 
