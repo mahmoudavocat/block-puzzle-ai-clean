@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
+
+
+  
   <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#121212">
 
@@ -36,34 +39,85 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <style>
 
+
+#welcomeScreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: white;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+
+
+
+.fade-out {
+  animation: fadeOut 0.7s ease forwards;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+
+.splash-screen {
+  background: linear-gradient(to bottom, #3a0055 0%, #4a007d 50%, #5e20a0 100%);
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  z-index: 9999;
+}
+.splash-screen::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at top, rgba(255,255,255,0.08), transparent 70%);
+  pointer-events: none;
+}
+
+
+.studio-logo {
+  width: 240px;
+  height: 240px;
+  animation: pulse 2s infinite;
+}
+
+.studio-name {
+  font-size: 1.5rem;
+  font-weight: 600;
+  font-family: 'Tajawal', sans-serif;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.6; }
+}
+
     
-body {
-  padding: 0;
-  margin: 0;
-}
 
-
-body {
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
-}
-
-
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #eef6fb;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      height: 100vh;
-      touch-action: manipulation;
-      overflow: hidden;
-      padding: 10px;
-    }
+    
     
     .back-home-btn {
       position: absolute;
@@ -412,30 +466,36 @@ body {
       animation: boardExit 0.5s ease-in forwards;
     }
     
-    .welcome-screen {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: #eef6fb;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      z-index: 1000;
-    }
-    
-    .welcome-card {
-  background: linear-gradient(to bottom, #ffffff, #f3faff);
-  padding: 30px 25px;
-  border-radius: 24px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  text-align: center;
-  max-width: 380px;
-  width: 90%;
-  animation: fadeInCard 0.5s ease-out;
+.welcome-screen {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #eef6fb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  flex-direction: column;
 }
+
+
+
+
+.welcome-card {
+  max-width: 90%;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  background: white;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* دي المهمة 👑 */
+  min-height: 200px; /* حسب حجم المحتوى */
+   display: contents; /* ← يخليها شفافة للتنسيق بدون ما تأثر على التمركز */
+}
+
 
 @keyframes fadeInCard {
   0% { opacity: 0; transform: translateY(20px); }
@@ -652,18 +712,20 @@ body {
 }
 
 .welcome-btn {
-  padding: 14px 28px;
   font-size: 1.2rem;
-  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 8px;
   border: none;
-  border-radius: 20px;
-  background: linear-gradient(135deg, #2196f3, #21cbf3);
+  background: #2196F3;
   color: white;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   cursor: pointer;
-  transition: all 0.3s ease;
-  min-width: 140px;
+  transition: background 0.3s;
 }
+
+.welcome-btn:hover {
+  background: #1976D2;
+}
+
 
 .welcome-btn:hover {
   transform: scale(1.05);
@@ -702,6 +764,14 @@ body {
   transition: all 0.3s ease;
 }
 
+
+.welcome-card {
+  display: contents; /* 🔥 السحر هنا */
+}
+
+
+
+
     </style>
     <!-- ضع هذه الأسطر قبل </head> -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -710,10 +780,25 @@ body {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
-  body {
-    margin: 0;
-    overflow: hidden;
-  }
+  
+  
+
+
+
+body {
+  margin: 0;
+  padding: 10px;
+  font-family: 'Segoe UI', sans-serif;
+  background: #eef6fb;
+  height: 100vh;
+  overflow: hidden;
+  display: block; /* ✅ مهم جداً */
+}
+
+
+
+
+
 </style>
 
 <!-- إضافة هذه الأسطر -->
@@ -721,6 +806,122 @@ body {
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <script>
+
+window.addEventListener("DOMContentLoaded", async () => {
+  const splash = document.getElementById("splashScreen");
+
+  const MIN_DISPLAY = 2200; // الحد الأدنى لعرض شاشة التحميل
+  const MAX_WAIT = 7000; // الحد الأقصى للتحميل
+
+  // نبدأ المؤقتات
+  const waitMinTime = new Promise(res => setTimeout(res, MIN_DISPLAY));
+  const preload = preloadEverything(); // تحميل فعلي
+  const maxWait = new Promise(res => setTimeout(res, MAX_WAIT));
+
+  // أول ما يخلص التحميل أو الوقت الأقصى – نكمل
+  await Promise.race([
+    Promise.all([preload, waitMinTime]),
+    maxWait
+  ]);
+
+  // نكمل طبيعي بعد كده
+  splash.classList.add("fade-out");
+  setTimeout(() => {
+    splash.style.display = "none";
+    goToNextScreen();
+  }, 700);
+});
+
+
+
+// دالة التحميل
+async function preloadEverything() {
+  const imagePaths = [
+    "assets/ai_default.png",
+    "assets/ai_happy.png",
+    "assets/ai_angry.png",
+    "assets/ai_thinking.png",
+    "assets/nova_logo.png"
+    // زوّد باقي الصور حسب اللعبة
+  ];
+
+  const soundPaths = [
+    "assets/sounds/button-click.mp3",
+    "assets/sounds/shape-pick.mp3",
+    "assets/sounds/singleClear.mp3",
+    "assets/sounds/combo-clear.mp3",
+    "assets/sounds/bubble-appear.mp3"
+    // زوّد باقي الأصوات برضو
+  ];
+
+  // ✅ تحميل الصور
+  await Promise.all(
+    imagePaths.map((src) => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = resolve;
+        img.onerror = resolve; // حتى لو فشل التحميل، نكمّل
+        img.src = src;
+      });
+    })
+  );
+
+  // ✅ تحميل الأصوات
+  await Promise.all(
+    soundPaths.map((src) => {
+      return new Promise((resolve) => {
+        const audio = new Audio();
+        audio.onloadeddata = resolve; // أسرع وأكفأ من oncanplaythrough
+        audio.onerror = resolve;
+        audio.src = src;
+      });
+    })
+  );
+
+  // ✅ تحميل ملف الجمل الخاصة بالذكاء الاصطناعي حسب اللغة
+  const lang = localStorage.getItem("language") || "en";
+  await new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = `assets/lang/aiResponses_${lang}.js`;
+    script.onload = resolve;
+    script.onerror = () => {
+      console.error("⚠️ فشل تحميل ملف الجمل:", script.src);
+      resolve(); // نكمل عادي حتى لو الملف ناقص
+    };
+    document.head.appendChild(script);
+  });
+
+  // ✅ تهيئة الجمل لو فيه reloadAIResponses
+  if (typeof reloadAIResponses === "function") {
+    reloadAIResponses();
+  }
+
+  // ✅ تأخير اختياري صغير للعرض الجمالي
+  await new Promise((res) => setTimeout(res, 300));
+}
+
+
+// دالة لتحديد الوجهة بعد التحميل
+function goToNextScreen() {
+  const data = localStorage.getItem("blockPlayerData");
+
+  if (!data) {
+    // لو أول مرة، يظهر شاشة اختيار اللغة والجنس
+    const welcome = document.getElementById("welcomeScreen");
+welcome.classList.remove("hidden");
+welcome.style.display = "flex";
+
+  } else {
+    // يفتح القائمة الرئيسية فقط، بدون بدء اللعبة
+    document.getElementById("mainMenu").style.display = "block";
+
+   
+  }
+}
+
+
+
+
   // حل سحري لمنع التباطؤ
   document.addEventListener('DOMContentLoaded', () => {
     SoundManager.loadSounds();
@@ -762,7 +963,6 @@ const Pan = new Hammer.Pan({ threshold: 5 });
 
 
 
-  
 
 
 
@@ -802,6 +1002,10 @@ const Pan = new Hammer.Pan({ threshold: 5 });
 
 </head>
 <body>
+   <div id="splashScreen" class="splash-screen">
+    <img src="assets/nova_logo.png" alt="NovaCode Studio Logo" class="studio-logo">
+   
+  </div>
   <div class="welcome-screen" id="welcomeScreen">
     <div class="welcome-card">
       <p id="welcomeText" style="display:none;"></p>
@@ -1310,7 +1514,8 @@ document.body.addEventListener('touchstart', () => {
 if (playerBehavior.avgSpeed && playerBehavior.avgSpeed < 2000) smartFactor += 1;
 if (playerBehavior.perfectClears >= 5) smartFactor += 1;
 if (playerBehavior.nearFails === 0 && score > 800) smartFactor += 1;
-difficultyLevel = 1 + smartFactor * 0.7; // تقليل وتيرة التصاعد
+difficultyLevel = 1 + smartFactor * 0.3; // تقليل وتيرة التصاعد
+
 
     }
 
@@ -1621,14 +1826,26 @@ function resumeGame() {
     shapesDiv.innerHTML = "";
     
     // مسح بعض الخلايا عشوائياً (مثال: 5 خلايا)
-    let cellsCleared = 0;
-    while (cellsCleared < 5) {
-      const randomCell = Math.floor(Math.random() * gridCells.length);
-      if (gridCells[randomCell].classList.contains("filled")) {
-        gridCells[randomCell].classList.remove("filled");
-        cellsCleared++;
-      }
+let filledCells = gridCells.filter(cell => cell.classList.contains("filled"));
+let targetToClear = Math.floor(filledCells.length * 0.4); // 40% من المليانين
+
+let cellsCleared = 0;
+for (let row = 0; row < 8; row++) {
+  for (let col = 0; col < 8; col++) {
+    const index = xyToIndex(col, row);
+    const cell = gridCells[index];
+
+    if (cell.classList.contains("filled")) {
+      cell.classList.remove("filled");
+      cellsCleared++;
     }
+
+    if (cellsCleared >= targetToClear) break;
+  }
+  if (cellsCleared >= targetToClear) break;
+}
+
+
     
     // إعادة توليد الأشكال
     generateSmartShapes();
@@ -1936,10 +2153,18 @@ function showInsightReport() {
       clearPreview();
     });
 
-   let playerData = {
-  language: '',
-  gender: ''
-};
+  let playerData;
+try {
+  playerData = JSON.parse(localStorage.getItem("blockPlayerData")) || {};
+  if (typeof playerData.language !== 'string' || typeof playerData.gender !== 'string') {
+    throw new Error("بيانات غير صالحة");
+  }
+} catch (e) {
+  console.warn("🚨 بيانات مش مظبوطة من localStorage - هنبدأ من جديد");
+  localStorage.removeItem("blockPlayerData");
+  playerData = { language: '', gender: '' };
+}
+
 
 
     function chooseLanguage(lang) {
@@ -2079,20 +2304,9 @@ document.getElementById("avatarIntroScreen").classList.remove("hidden");
 
 
 
-  // ❗ نعرض رسالة تحميل لطيفة
-  document.getElementById("welcomeScreen").innerHTML = `
-    <div class="welcome-card">
-      <p id="loadingText">🤖 جاري التحضير لمغامرتك...</p>
-      <div id="loadingAvatar" style="margin-top:20px;">
-        <div class="bubble-inner">
-          <img id="aiAvatarLoading" src="assets/ai_thinking.png" alt="AI" />
-          <div class="ai-dots">
-            <span></span><span></span><span></span>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
+document.getElementById("welcomeText").innerText = "🤖 جاري التحضير لمغامرتك.";
+document.getElementById("langButtons").style.display = "none";
+
 
   // نبدأ فحص التحميل
   const checkReady = setInterval(() => {
@@ -2584,6 +2798,19 @@ document.addEventListener("DOMContentLoaded", () => {
   
     // ✅ أي استخدام تاني للـ manager لازم يبقى هنا أو بعده
   });
+
+  window.addEventListener('DOMContentLoaded', async () => {
+  await preloadEverything(); // هنا بنفترض عندك دالة تحميل أصوات/صور
+
+  // ندي فرصة 2 ثانية للعرض
+  setTimeout(() => {
+    document.getElementById("splashScreen").style.display = "none";
+   // دي الدالة اللي تفتح القائمة أو intro AI
+  }, 2000);
+});
+
+
+
   </script>
   
 </body>
