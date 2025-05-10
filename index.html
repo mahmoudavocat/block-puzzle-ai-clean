@@ -2684,6 +2684,14 @@ loadSounds: async function () {
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
       this.buffers[key] = audioBuffer;
+      if (key === 'buttonClick') {
+  const source = this.context.createBufferSource();
+  source.buffer = audioBuffer;
+  source.connect(this.context.destination);
+  source.start(0);
+  source.stop(this.context.currentTime + 0.05); // توقف سريع
+}
+
     } catch (err) {
       console.warn("❌ فشل تحميل الصوت:", key, err);
     }
