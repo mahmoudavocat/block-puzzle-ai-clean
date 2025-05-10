@@ -945,31 +945,20 @@ welcome.style.display = "flex";
 };
 
   const originalPlay = SoundManager.play;
-  SoundManager.play = function (name) {
+ SoundManager.play = function(name) {
   if (!isSoundOn) return;
 
   const s = this.sounds?.[name];
   if (s) {
     try {
-      // ✅ تشغيل أولي صامت لكسر التجميد في PWA
-      s.muted = true;
-      s.play().then(() => {
-        s.pause();
-        s.muted = false;
-        s.currentTime = 0;
-
-        // ✅ التشغيل الحقيقي بعد فك التجميد
-        s.play().catch(() => {});
-      }).catch(() => {
-        // في حال الفشل، شغّل عادي بدون كسر
-        s.currentTime = 0;
-        s.play().catch(() => {});
-      });
+      s.currentTime = 0;
+      s.play().catch(() => {});
     } catch (err) {
-      console.warn("❌ خطأ في تشغيل الصوت:", name, err);
+      console.warn("خطأ في تشغيل الصوت:", err);
     }
   }
 };
+
 
     if ('requestIdleCallback' in window) {
       requestIdleCallback(() => {}, { timeout: 1000 });
@@ -1274,15 +1263,7 @@ function setupButtonSounds() {
   <script>
 
     // دالة ذكية تتعقب جميع النقرات في الصفحة
-document.addEventListener('click', function(event) {
-  // التحقق إذا كان العنصر المضغوط عليه زر أو له خاصية onclick
-  if (event.target.tagName === 'BUTTON' || event.target.hasAttribute('onclick')) {
-    // تجنب تكرار الصوت إذا كان منبثقًا من عنصر آخر
-    if (!event.target.classList.contains('no-sound')) {
-      SoundManager.play('buttonClick');
-    }
-  }
-});
+
     // الكود الأساسي للعبة يبقى كما هو بدون تغيير
     // فقط يتم تعديل دالة showAIReaction لتتناسب مع التصميم الجديد
     
