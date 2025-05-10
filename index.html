@@ -1220,6 +1220,13 @@ function setupButtonSounds() {
 
 
 
+// 🔊 ربط جميع الأزرار بتشغيل الصوت
+document.addEventListener('click', function(event) {
+  const el = event.target.closest('button, .btn, [role="button"], [onclick]');
+  if (el && !el.classList.contains('no-sound')) {
+    SoundManager.play('buttonClick');
+  }
+});
 
 
     </script>
@@ -2666,7 +2673,6 @@ const SoundManager = {
   sounds: {},
   context: new (window.AudioContext || window.webkitAudioContext)(),
 buffers: {}, // لتخزين الأصوات بعد فك تشفيرها
-
 loadSounds: async function () {
   const files = {
     buttonClick: "assets/sounds/button-click.mp3",
@@ -2684,13 +2690,15 @@ loadSounds: async function () {
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
       this.buffers[key] = audioBuffer;
+
+      // ✅ تسخين buttonClick بعد التحميل
       if (key === 'buttonClick') {
-  const source = this.context.createBufferSource();
-  source.buffer = audioBuffer;
-  source.connect(this.context.destination);
-  source.start(0);
-  source.stop(this.context.currentTime + 0.05); // توقف سريع
-}
+        const source = ctx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(ctx.destination);
+        source.start(0);
+        source.stop(ctx.currentTime + 0.05); // توقف سريع
+      }
 
     } catch (err) {
       console.warn("❌ فشل تحميل الصوت:", key, err);
@@ -2699,6 +2707,7 @@ loadSounds: async function () {
 
   console.log("✅ الأصوات تم تحميلها وفك تشفيرها");
 },
+
 
 play: function (name) {
   if (!isSoundOn) return;
