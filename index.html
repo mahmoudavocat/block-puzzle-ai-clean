@@ -940,7 +940,10 @@ welcome.style.display = "flex";
   // حل سحري لمنع التباطؤ
   document.addEventListener('DOMContentLoaded', () => {
     SoundManager.loadSounds();
-    
+    audio.onloadeddata = () => {
+  console.log(`✅ جاهز: ${files[key]}`);
+};
+
   const originalPlay = SoundManager.play;
 SoundManager.play = function(name) {
   if (!isSoundOn) return;
@@ -2703,6 +2706,11 @@ const SoundManager = {
       const audio = new Audio(files[key]);
       audio.preload = 'auto';
       this.sounds[key] = audio;
+       // 👇 التهيئة الصوتية لتجهيز الـ buffer
+  audio.play().then(() => {
+    audio.pause();
+    audio.currentTime = 0;
+  }).catch(() => {});
     }
 
     console.log("🔊 الأصوات تم تحميلها");
