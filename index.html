@@ -945,10 +945,32 @@ welcome.style.display = "flex";
 };
 
   const originalPlay = SoundManager.play;
-SoundManager.play = function(name) {
+  SoundManager.play = function (name) {
   if (!isSoundOn) return;
-  originalPlay.call(SoundManager, name);
+
+  const s = this.sounds?.[name];
+  if (s) {
+    try {
+      // ✅ تشغيل أولي صامت لكسر التجميد في PWA
+      s.muted = true;
+      s.play().then(() => {
+        s.pause();
+        s.muted = false;
+        s.currentTime = 0;
+
+        // ✅ التشغيل الحقيقي بعد فك التجميد
+        s.play().catch(() => {});
+      }).catch(() => {
+        // في حال الفشل، شغّل عادي بدون كسر
+        s.currentTime = 0;
+        s.play().catch(() => {});
+      });
+    } catch (err) {
+      console.warn("❌ خطأ في تشغيل الصوت:", name, err);
+    }
+  }
 };
+
     if ('requestIdleCallback' in window) {
       requestIdleCallback(() => {}, { timeout: 1000 });
     }
@@ -2703,20 +2725,15 @@ const SoundManager = {
     };
 
     for (let key in files) {
-     const audio = new Audio(files[key]);
-audio.preload = 'auto';
-audio.load();
-audio.volume = 0;
-audio.play().then(() => {
-  audio.pause();
-  audio.currentTime = 0;
-}).catch(() => {});
-this.sounds[key] = audio;
+      const audio = new Audio(files[key]);
+      audio.preload = 'auto';
+      this.sounds[key] = audio;
+    
 
        // 👇 التهيئة الصوتية لتجهيز الـ buffer
   audio.play().then(() => {
     audio.pause();
-    audio.currentTime = 0;
+
   }).catch(() => {});
     }
 
@@ -2839,7 +2856,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener('DOMContentLoaded', async () => {
   await preloadEverything(); // هنا بنفترض عندك دالة تحميل أصوات/صور
 
-  document.body.addEventListener("touchstart", () => {
+ document.body.addEventListener("touchend", () => {
   try {
     if (
       typeof SoundManager?.context !== "undefined" &&
