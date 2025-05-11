@@ -2224,40 +2224,37 @@ window.addEventListener("pointermove", e => {
 });
 
 
-document.addEventListener("pointerup", () => {
+
+document.addEventListener("pointerup", e => {
   if (!floating) return;
 
+  // 🧠 نحسب مكان الإسقاط بنفس طريقة الشكل العائم (مع سرعة 1.4)
   const cellSize = gridCells[0].getBoundingClientRect().width;
   const gridRect = grid.getBoundingClientRect();
 
-  const x = lastPointer.pageX - offset.x;
-  const y = lastPointer.pageY - offset.y - (cellSize * 4);
+  const moveX = (e.pageX - pointerStartX) * 1.4;
+  const moveY = (e.pageY - pointerStartY) * 1.4;
 
-  // ✅ نفس التعويض المتوسط
-  const floatLeft = x + cellSize * 0.3;
-  const floatTop = y + cellSize * 0.3;
+  const boostedX = floatingStartX + moveX;
+  const boostedY = floatingStartY + moveY;
 
-  const gridX = Math.floor((floatLeft - gridRect.left) / (gridRect.width / 8));
-  const gridY = Math.floor((floatTop - gridRect.top) / (gridRect.height / 8));
+  const gridX = Math.floor((boostedX + cellSize * 0.5 - gridRect.left) / (gridRect.width / 8));
+  const gridY = Math.floor((boostedY + cellSize * 0.5 - gridRect.top) / (gridRect.height / 8));
 
   if (canPlace(currentShape, gridX, gridY)) {
     placeShape(currentShape, gridX, gridY);
-    SoundManager.play('shapePlace');
-    sourceElement.remove();
+    sourceElement.remove(); // حذف الشكل من تحت
   } else {
-    SoundManager.play('shapeReject');
-    sourceElement.style.visibility = "";
+    sourceElement.style.visibility = "visible"; // رجّعه لو فشل
   }
 
-  cancelAnimationFrame(animationFrameId);
+  clearPreview();
   floating.remove();
   floating = null;
   currentShape = null;
   sourceElement = null;
-  offset = { x: 0, y: 0 };
-  clearPreview();
 
-  document.removeEventListener("pointermove", trackPointer, { passive: true });
+  cancelAnimationFrame(animationFrameId);
 });
 
 
