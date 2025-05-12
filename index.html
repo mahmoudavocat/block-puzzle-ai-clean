@@ -284,17 +284,18 @@
 @media (max-width: 600px) {
   #shapes {
     flex-wrap: nowrap;
-    overflow-x: auto;
-    justify-content: center;
+    overflow-x: hidden; /* ← يمنع السكرول */
+    justify-content: space-between;
   }
 
   #shapes .shape {
-    grid-template-columns: repeat(4, 36px);
-    grid-template-rows: repeat(4, 36px);
-    gap: 1px;
+    grid-template-columns: repeat(4, 28px); /* ← بدل 36 */
+    grid-template-rows: repeat(4, 28px);
+    gap: 1.5px;
     flex: 0 0 auto;
   }
 }
+
 
     
     .block {
