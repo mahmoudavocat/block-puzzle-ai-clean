@@ -1777,12 +1777,16 @@ function normalizeShape(shape) {
 
 
 document.addEventListener("touchmove", e => {
-  if (!floating || e.touches.length !== 1) return; // تجاهل لو أكتر من لمسة
+  if (!floating || e.touches.length < 1 || activeTouchId === null) return;
 
-  const touch = e.touches[0];
+  // دور على اللمسة اللي بدأت السحب
+  const touch = [...e.touches].find(t => t.identifier === activeTouchId);
+  if (!touch) return;
+
   lastPointer.pageX = touch.pageX;
   lastPointer.pageY = touch.pageY;
 });
+
 
 
 
@@ -1824,6 +1828,9 @@ shape = normalizeShape(shape); // ← مهم جدًا هنا
    el.addEventListener("pointerdown", e => {
   if (activePointerId !== null) return;
   activePointerId = e.pointerId;
+if (e.pointerType === "touch") {
+  activeTouchId = e.pointerId;
+}
 
   SoundManager.play('shapePick');
 
@@ -1873,6 +1880,7 @@ shape = normalizeShape(shape); // ← مهم جدًا هنا
   });
 }
 
+let activeTouchId = null;
 let activePointerId = null;
 
 
