@@ -1811,12 +1811,11 @@ shape = normalizeShape(shape); // ← مهم جدًا هنا
     const el = createShapeElement(shape);
     shapesDiv.appendChild(el);
 
-    el.addEventListener("pointerdown", e => {
-      if (activePointerId !== null) return; // 👈 في لمسة شغالة بالفعل
+   el.addEventListener("pointerdown", e => {
+  if (activePointerId !== null) return;
+  activePointerId = e.pointerId;
 
-activePointerId = e.pointerId; // 👈 خزّن أول لمسة فقط
-
-      isDragging = true;
+  SoundManager.play('shapePick');
 
       SoundManager.play('shapePick');
       e.preventDefault();
@@ -1855,8 +1854,8 @@ activePointerId = e.pointerId; // 👈 خزّن أول لمسة فقط
       currentShape = shape;
       lastPointer = { pageX: e.pageX, pageY: e.pageY };
 
-      document.addEventListener("pointermove", e => {
-  if (e.pointerId !== activePointerId || !floating || !lastPointer) return;
+      document.addEventListener("pointermove", e => { // اسمح فقط للمسة النشطة (المسجلة في activePointerId)
+  if (!floating || e.pointerId !== activePointerId) return;
 
   lastPointer.pageX = e.pageX;
   lastPointer.pageY = e.pageY;
