@@ -1775,6 +1775,12 @@ function normalizeShape(shape) {
     }
 
 
+document.addEventListener("pointermove", e => {
+  if (!floating || e.pointerId !== activePointerId) return;
+
+  lastPointer.pageX = e.pageX;
+  lastPointer.pageY = e.pageY;
+});
 
 
 function generateSmartShapes() {
@@ -1854,12 +1860,7 @@ shape = normalizeShape(shape); // ← مهم جدًا هنا
       currentShape = shape;
       lastPointer = { pageX: e.pageX, pageY: e.pageY };
 
-      document.addEventListener("pointermove", e => { // اسمح فقط للمسة النشطة (المسجلة في activePointerId)
-  if (!floating || e.pointerId !== activePointerId) return;
-
-  lastPointer.pageX = e.pageX;
-  lastPointer.pageY = e.pageY;
-});
+ 
 
       animationFrameId = requestAnimationFrame(followPointer);
 
