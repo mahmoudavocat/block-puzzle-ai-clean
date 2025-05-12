@@ -281,6 +281,13 @@
   touch-action: none;
 }
 
+@media (max-width: 600px) {
+  .static-shape.shape {
+    grid-template-columns: repeat(4, clamp(28px, 6vmin, 48px));
+    grid-template-rows: repeat(4, clamp(28px, 6vmin, 48px));
+    gap: 2px;
+  }
+}
 
     
     .block {
@@ -1794,6 +1801,8 @@ shape = normalizeShape(shape); // ← مهم جدًا هنا
   // ✅ توليد العناصر على الشاشة
   shapesInHand.forEach(shape => {
     const el = createShapeElement(shape);
+el.classList.add("static-shape");
+
     shapesDiv.appendChild(el);
 
     el.addEventListener("pointerdown", e => {
