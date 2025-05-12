@@ -1855,7 +1855,13 @@ activePointerId = e.pointerId; // 👈 خزّن أول لمسة فقط
       currentShape = shape;
       lastPointer = { pageX: e.pageX, pageY: e.pageY };
 
-      document.addEventListener("pointermove", trackPointer, { passive: true });
+      document.addEventListener("pointermove", e => {
+  if (e.pointerId !== activePointerId || !floating || !lastPointer) return;
+
+  lastPointer.pageX = e.pageX;
+  lastPointer.pageY = e.pageY;
+});
+
       animationFrameId = requestAnimationFrame(followPointer);
 
       el.style.visibility = "hidden";
@@ -2489,6 +2495,8 @@ document.addEventListener("pointerup", e => {
 
   cancelAnimationFrame(animationFrameId);
   isDragging = false;
+  activePointerId = null;
+
 checkGameOver();
 
 });
