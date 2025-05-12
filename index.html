@@ -1777,21 +1777,13 @@ function normalizeShape(shape) {
 
 
 document.addEventListener("touchmove", e => {
-  if (!floating || e.touches.length === 0) return;
+  if (!floating || e.touches.length !== 1) return; // تجاهل لو أكتر من لمسة
 
-  // احسب مركز اللمستين (أو لمسة واحدة)
-  let totalX = 0, totalY = 0;
-  for (let i = 0; i < e.touches.length; i++) {
-    totalX += e.touches[i].pageX;
-    totalY += e.touches[i].pageY;
-  }
-
-  const centerX = totalX / e.touches.length;
-  const centerY = totalY / e.touches.length;
-
-  lastPointer.pageX = centerX;
-  lastPointer.pageY = centerY;
+  const touch = e.touches[0];
+  lastPointer.pageX = touch.pageX;
+  lastPointer.pageY = touch.pageY;
 });
+
 
 
 
