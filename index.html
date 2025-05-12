@@ -1812,6 +1812,10 @@ shape = normalizeShape(shape); // ← مهم جدًا هنا
     shapesDiv.appendChild(el);
 
     el.addEventListener("pointerdown", e => {
+      if (activePointerId !== null) return; // 👈 في لمسة شغالة بالفعل
+
+activePointerId = e.pointerId; // 👈 خزّن أول لمسة فقط
+
       isDragging = true;
 
       SoundManager.play('shapePick');
@@ -1859,6 +1863,7 @@ shape = normalizeShape(shape); // ← مهم جدًا هنا
   });
 }
 
+let activePointerId = null;
 
 
 let gameOverCheckInterval = null;
@@ -2452,7 +2457,8 @@ window.addEventListener("pointermove", e => {
 
 
 document.addEventListener("pointerup", e => {
-  
+  activePointerId = null; // 👈 فك قفل اللمسة لما تخلص
+
   if (!floating) return;
 
   // 🧠 نحسب مكان الإسقاط بنفس طريقة الشكل العائم (مع سرعة 1.4)
