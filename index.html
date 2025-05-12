@@ -40,6 +40,37 @@
   <style>
 
 
+
+  #countdownBarContainer {
+    width: 100%;
+    max-width: 300px;
+    height: 12px;
+    background: #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 10px auto;
+    display: none;
+  }
+
+  #countdownBar {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #ff00cc, #3333ff, #00ffff, #00cc66, #ffff00, #ff6600, #ff0033);
+    background-size: 400% 100%;
+    animation: colorfulShift 5s linear infinite, countdownShrink 5s linear forwards;
+    transition: width 0.1s linear;
+  }
+
+  @keyframes colorfulShift {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+  }
+
+  @keyframes countdownShrink {
+    0% { width: 100%; }
+    100% { width: 0%; }
+  }
+
 #welcomeScreen {
   position: fixed;
   top: 0;
@@ -235,15 +266,22 @@
       max-width: 600px;
     }
     
-    .shape {
-      display: grid;
-      grid-template-columns: repeat(4, clamp(20px, 5vmin, 60px));
-      grid-template-rows: repeat(4, clamp(20px, 5vmin, 60px));
-      gap: 2px;
-      cursor: grab;
-      touch-action: none;
-      padding: 10px;
-    }
+.floating.shape {
+  grid-template-columns: repeat(4, var(--cell-size));
+  grid-template-rows: repeat(4, var(--cell-size));
+}
+
+
+.shape {
+  display: grid;
+  grid-template-columns: repeat(4, clamp(20px, 5vmin, 60px));
+  grid-template-rows: repeat(4, clamp(20px, 5vmin, 60px));
+  gap: 2px;
+  cursor: grab;
+  touch-action: none;
+}
+
+
     
     .block {
       width: 100%;
@@ -254,18 +292,15 @@
       pointer-events: none;
     }
     
-    .floating {
-      position: absolute;
-      z-index: 999;
-      pointer-events: none;
-      opacity: 0.95;
-      transition: left 0.07s ease, top 0.07s ease;
-      transform: none !important;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-rows: repeat(4, 1fr);
-      gap: 2px;
-    }
+ .floating {
+  position: absolute;
+  pointer-events: none;
+  z-index: 9999;
+  will-change: transform;
+  transition: none !important;
+
+}
+
     
     #finalScoreDisplay {
       font-size: 2.5rem;
@@ -787,7 +822,7 @@
 
 body {
   margin: 0;
-  padding: 10px;
+  
   font-family: 'Segoe UI', sans-serif;
   background: #eef6fb;
   height: 100vh;
@@ -927,7 +962,13 @@ welcome.style.display = "flex";
 
   } else {
     // يفتح القائمة الرئيسية فقط، بدون بدء اللعبة
-    document.getElementById("mainMenu").style.display = "block";
+    const menu = document.getElementById("mainMenu");
+if (menu) {
+  menu.style.display = "block";
+} else {
+  console.warn("⚠️ عنصر mainMenu مش موجود في الصفحة!");
+}
+
 
    
   }
@@ -1069,7 +1110,8 @@ const Pan = new Hammer.Pan({ threshold: 5 });
 
 
   <!-- Screens -->
-  <div class="screen active" id="menu">
+  <div class="screen active" id="mainMenu">
+
     <div class="menu-content">
       <h1 class="game-title">Block Puzzle AI</h1>
       <button class="btn start-btn" onclick="startGame()">ابدأ رحلتي</button>
@@ -1120,18 +1162,31 @@ const Pan = new Hammer.Pan({ threshold: 5 });
     <div id="grid"></div>
     <div id="shapes"></div>
   </div>
+<div id="resumeCountdownBarContainer"><div id="resumeCountdownBar"></div></div>
+
+<p id="countdown"></p>
+
 
   <div class="screen" id="gameover">
     <h1>Game Over</h1>
     <div id="finalScoreDisplay"></div>
-    <p id="motivationalText" style="font-size: 1.2rem; margin: 10px 0; color: #f4a300; font-weight: bold;"></p>
+    
     <button class="golden-btn" id="resumeBtn" onclick="resumeGame()">✨ استكمل اللعب</button>
     <button class="btn" id="restartBtn" style="display:none;" onclick="restartGame()">ابدأ من جديد</button>
     <button class="btn golden-btn" id="insightBtn" onclick="showInsightReport()" style="margin-top: 10px; font-size: 1.1rem;">...</button>
+<p id="countdown" class="countdown-animate" style="display:none;"></p>
+
+<div id="countdownBarContainer">
+  <div id="countdownBar"></div>
+</div>
 
 
 
-    <div id="countdown" class="countdown-animate">انتظر 5 ثواني...</div>
+   
+    <div id="countdownBarContainer">
+  <div id="countdownBar"></div>
+</div>
+
   </div>
   
   
@@ -1247,6 +1302,8 @@ document.addEventListener('click', function(event) {
     let messageQueue = [];
     let isShowingMessage = false;
 
+    let gameOverInterval = null;
+
     function showAIReaction(eventType) {
   console.log("🔥 حدث AI مطلوب:", eventType);
   if (eventType === 'lateOpen') {
@@ -1258,6 +1315,11 @@ document.addEventListener('click', function(event) {
     processMessageQueue();
   }
 }
+
+
+
+
+
 
 
 
@@ -1398,8 +1460,12 @@ let isSoundOn = true; // ← هذا السطر هنا
 };
 
 
+
+let lastActivityTime = Date.now(); // ⏱️ لتتبع آخر نشاط للّاعب
+
     let currentShape = null, sourceElement = null, floating = null;
     let offset = { x: 0, y: 0 }, resumed = false, monitorInterval = null;
+let animationFrameId = null;
 
     const grid = document.getElementById("grid");
     const shapesDiv = document.getElementById("shapes");
@@ -1415,11 +1481,12 @@ if (canvas) {
   canvas.style.transform = 'translateZ(0)';
 }
 /*** انتهى الكود المضاف ***/
-    const screens = {
-      menu: document.getElementById("menu"),
-      game: document.getElementById("game"),
-      gameover: document.getElementById("gameover")
-    };
+  const screens = {
+  menu: document.getElementById("mainMenu"),
+  game: document.getElementById("game"),
+  gameover: document.getElementById("gameover")
+};
+
 
     const weightedShapes = [
   { shape: [[0,0]], weight: 1 }, // نقطة واحدة
@@ -1445,64 +1512,84 @@ if (canvas) {
 ];
 
 
-    function switchScreen(screen) {
-      
-      Object.values(screens).forEach(s => s.classList.remove("active"));
-      screens[screen].classList.add("active");
-    }
+  function switchScreen(screen) {
+  if (!screens[screen]) {
+    console.error(`❌ الشاشة '${screen}' مش معرفة داخل screens object`);
+    return;
+  }
 
-    function startGame() {
-      gameStartTime = Date.now();
-
-      if (!window.aiReady) {
-  console.log("لسه مستني تحميل الجمل...");
-  setTimeout(startGame, 100);
-  
-  clearPreview();
-  shapesDiv.innerHTML = "";
-  return;
+  Object.values(screens).forEach(s => s.classList.remove("active"));
+  screens[screen].classList.add("active");
 }
 
-      resumed = false;
-      let oldBehavior = JSON.parse(localStorage.getItem("blockBehavior") || "{}");
-      if (oldBehavior.totalMoves) playerBehavior = oldBehavior;
+function startGame() {
+  console.log("🎮 تم تشغيل startGame()");
+  gameStartTime = Date.now();
+  lastActivityTime = Date.now();
 
-      switchScreen("game");
-      grid.innerHTML = "";
-      gridCells = [];
-      for (let i = 0; i < 64; i++) {
-        const cell = document.createElement("div");
-        cell.className = "cell";
-        grid.appendChild(cell);
-        gridCells.push(cell);
-      }
-      score = 0;
-      shapesUsed = 0;
-      updateScore();
-      generateSmartShapes();
-      startMonitor();
-    
-     // مراقبة الأداء السيء أثناء اللعب (نسخة معدّلة)
-setTimeout(() => {
-  const checkBadPerformance = setInterval(() => {
-    const elapsed = Date.now() - gameStartTime;
-    console.log("⏱ وقت اللعب:", elapsed, "📉 النقاط:", score, "🔥 كمبو:", playerBehavior.perfectClears);
-    if (score < 350 && elapsed > 25000 && playerBehavior.perfectClears === 0) {
-      showAIReaction("embarrassed");
-      clearInterval(checkBadPerformance);
-    }
-  }, 5000);
-}, 10000);
-document.body.addEventListener('touchstart', () => {
-  if (SoundManager.context?.state === 'suspended') {
-    SoundManager.context.resume();
+  if (!window.aiReady) {
+    console.log("لسه مستني تحميل الجمل...");
+    setTimeout(startGame, 100);
+    clearPreview();
+    shapesDiv.innerHTML = "";
+    return; // ⛔ إنهاء مبكر قبل تنفيذ أي شيء آخر
   }
-}, { once: true });
+  
 
+  // ✅ بدء مراقبة الخمول (الملل)
+  setInterval(() => {
+    if (Date.now() - lastActivityTime > 17000) {
+      showAIReaction("idle");
+      lastActivityTime = Date.now(); // منع التكرار السريع
     }
+  }, 4000);
+
+  // ✅ بدء مراقبة الجيم أوفر بعد التأكد من جاهزية AI
+  startGameOverWatcher();
+
+  resumed = false;
+
+  let oldBehavior = JSON.parse(localStorage.getItem("blockBehavior") || "{}");
+  if (oldBehavior.totalMoves) playerBehavior = oldBehavior;
+
+  switchScreen("game");
+  grid.innerHTML = "";
+  gridCells = [];
+
+  for (let i = 0; i < 64; i++) {
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    grid.appendChild(cell);
+    gridCells.push(cell);
+  }
+
+  score = 0;
+  shapesUsed = 0;
+  updateScore();
+  generateSmartShapes();
+
+  // ✅ مراقبة الأداء السيئ
+  setTimeout(() => {
+    const checkBadPerformance = setInterval(() => {
+      const elapsed = Date.now() - gameStartTime;
+      console.log("⏱ وقت اللعب:", elapsed, "📉 النقاط:", score, "🔥 كمبو:", playerBehavior.perfectClears);
+      if (score < 350 && elapsed > 25000 && playerBehavior.perfectClears === 0) {
+        showAIReaction("embarrassed");
+        clearInterval(checkBadPerformance);
+      }
+    }, 5000);
+  }, 10000);
+
+  // ✅ إعادة تفعيل الصوت لو متوقف
+  document.body.addEventListener('touchstart', () => {
+    if (SoundManager.context?.state === 'suspended') {
+      SoundManager.context.resume();
+    }
+  }, { once: true });
+}
 
     function restartGame() {
-      clearInterval(monitorInterval);
+    
       startGame();
     }
 
@@ -1521,22 +1608,107 @@ difficultyLevel = 1 + smartFactor * 0.3; // تقليل وتيرة التصاعد
       return y * 8 + x;
     }
 
-    function canPlace(shape, x, y) {
-      return shape.every(([dx, dy]) => {
-        const gx = x + dx, gy = y + dy;
-        return gx >= 0 && gx < 8 && gy >= 0 && gy < 8 &&
-          !gridCells[xyToIndex(gx, gy)].classList.contains("filled");
-      });
-    }
 
-    function canShapeFitAnywhere(shape) {
-      for (let y = 0; y < 8; y++) {
-        for (let x = 0; x < 8; x++) {
-          if (canPlace(shape, x, y)) return true;
+function canPlaceAnyShape() {
+  return shapesInHand.some(shape => canPlaceShapeAnywhere(shape));
+}
+
+
+
+
+
+function canPlaceShapeAnywhere(shape) {
+  const normalized = normalizeShape(shape);
+  const maxX = Math.max(...normalized.map(([x]) => x));
+  const maxY = Math.max(...normalized.map(([_, y]) => y));
+
+  for (let y = 0; y <= 8 - maxY - 1; y++) {
+    for (let x = 0; x <= 8 - maxX - 1; x++) {
+      if (canPlace(normalized, x, y)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+
+
+
+
+
+function canPlaceShapeAt(shape, startRow, startCol) {
+  for (let r = 0; r < shape.length; r++) {
+    for (let c = 0; c < shape[r].length; c++) {
+      if (shape[r][c]) {
+        const cellIndex = xyToIndex(startCol + c, startRow + r);
+        if (cellIndex < 0 || cellIndex >= gridCells.length || gridCells[cellIndex].classList.contains("filled")) {
+          return false;
         }
       }
+    }
+  }
+  return true;
+}
+
+
+
+
+function canPlace(shape, x, y) {
+  for (const [dx, dy] of shape) {
+    const gx = x + dx;
+    const gy = y + dy;
+
+    if (gx < 0 || gx >= 8 || gy < 0 || gy >= 8) {
       return false;
     }
+
+    const index = gy * 8 + gx;
+    const cell = gridCells[index];
+
+    if (!cell || cell.classList.contains("filled")) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+
+
+
+
+function canShapeFitAnywhere(shape) {
+  shape = normalizeShape(shape); // ← هذا التعديل مهم جدًا
+  const maxDx = Math.max(...shape.map(([dx]) => dx));
+  const maxDy = Math.max(...shape.map(([_, dy]) => dy));
+
+  for (let y = 0; y <= 7 - maxDy; y++) {
+    for (let x = 0; x <= 7 - maxDx; x++) {
+      if (canPlace(shape, x, y)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+
+function normalizeShape(shape) {
+  const minX = Math.min(...shape.map(([x]) => x));
+  const minY = Math.min(...shape.map(([_, y]) => y));
+  return shape.map(([x, y]) => [x - minX, y - minY]);
+}
+
+
+
+
+
+
+
+
 
     function rotateShape(shape, times = 1) {
       let result = shape.map(([x, y]) => [x, y]);
@@ -1549,25 +1721,33 @@ difficultyLevel = 1 + smartFactor * 0.3; // تقليل وتيرة التصاعد
       return result;
     }
 
+
+
+
     function createShapeElement(shape) {
-      
-      const el = document.createElement("div");
-      el.className = "shape";
+  const el = document.createElement("div");
+  el.className = "shape";
 
-      const minX = Math.min(...shape.map(([x]) => x));
-      const minY = Math.min(...shape.map(([_, y]) => y));
+  // حساب أقل إحداثي X و Y لتبدأ الشبكة من الزاوية العليا اليسرى
+  const xs = shape.map(([x]) => x);
+  const ys = shape.map(([_, y]) => y);
+  const minX = Math.min(...xs);
+  const minY = Math.min(...ys);
 
-      shape.forEach(([x, y]) => {
-        const block = document.createElement("div");
-        block.className = "block";
-        block.style.gridColumn = (x - minX + 1);
-        block.style.gridRow = (y - minY + 1);
-        el.appendChild(block);
-      });
+  shape.forEach(([x, y]) => {
+    const block = document.createElement("div");
+    block.className = "block";
 
-      el.dataset.shape = JSON.stringify(shape);
-      return el;
-    }
+    // تحديد موقع البلوك داخل شبكة 4x4 لكن تبدأ من (0,0)
+    block.style.gridColumn = `${x - minX + 1}`;
+    block.style.gridRow = `${y - minY + 1}`;
+
+    el.appendChild(block);
+  });
+
+  return el;
+}
+
 
     function getRandomWeightedShape() {
       let filtered = weightedShapes.filter(s => s.shape.length <= (5 + difficultyLevel));
@@ -1579,140 +1759,237 @@ difficultyLevel = 1 + smartFactor * 0.3; // تقليل وتيرة التصاعد
       }
     }
 
-    function generateSmartShapes() {
-      shapesDiv.innerHTML = "";
-      shapesUsed = 0;
-      shapesInHand = [];
-      let tries = 0;
-      const shape = getRandomWeightedShape();
-
-      while (shapesInHand.length < 3 && tries < 100) {
-        let shape = getRandomWeightedShape();
-        let rotation = Math.floor(Math.random() * 4);
-        shape = rotateShape(shape, rotation);
-
-        if (Math.random() < 10 && isLineClearShape(shape)) {
-  shapesInHand.push(shape);
-  continue;
-}
-
-
-function isLineClearShape(shape) {
-  const xs = shape.map(([x, _]) => x);
-  const ys = shape.map(([_, y]) => y);
-  const uniqueX = new Set(xs).size;
-  const uniqueY = new Set(ys).size;
-
-  return uniqueX === 1 || uniqueY === 1 || shape.length === 4 || shape.length === 9; // خطوط أو مربعات
-}
 
 
 
-        if (canShapeFitAnywhere(shape)) {
-          shapesInHand.push(shape);
-        }
-        tries++;
-      }
+function generateSmartShapes() {
+  shapesDiv.innerHTML = "";
+  shapesUsed = 0;
+  shapesInHand = [];
+  let tries = 0;
 
-      shapesInHand.forEach(shape => {
-        const el = createShapeElement(shape);
-        shapesDiv.appendChild(el);
+  while (shapesInHand.length < 3 && tries < 100) {
+  let shape = getRandomWeightedShape();
+let rotation = Math.floor(Math.random() * 4);
+shape = rotateShape(shape, rotation);
+shape = normalizeShape(shape); // ← مهم جدًا هنا
 
-        el.addEventListener("pointerdown", e => {
-          SoundManager.play('shapePick');
-          e.preventDefault();
-          sourceElement = el;
-          const rect = el.getBoundingClientRect();
-          const cellSize = gridCells[0].getBoundingClientRect().width;
-          offset.x = e.clientX - rect.left;
-          offset.y = e.clientY - rect.top;
 
-          pointerStartX = e.pageX;
-          pointerStartY = e.pageY;
 
-          floatingStartX = e.pageX;
-          floatingStartY = e.pageY - (cellSize * 4);
-
-          currentShape = shape;
-          floating = el.cloneNode(true);
-          floating.classList.add("floating");
-          floating.style.width = `${cellSize * 4}px`;
-          floating.style.height = `${cellSize * 4}px`;
-          floating.style.left = (floatingStartX - offset.x) + "px";
-          floating.style.top = (floatingStartY - offset.y) + "px";
-
-          el.style.visibility = "hidden";
-          document.body.appendChild(floating);
-          playerBehavior.failedAttempts++;
-console.log("📛 محاولة فاشلة رقم:", playerBehavior.failedAttempts);
-
-        });
-      });
-      
+    if (canShapeFitAnywhere(shape)) {
+      shapesInHand.push(shape);
     }
 
-    function placeShape(shape, x, y) {
-      shape.forEach(([dx, dy]) => {
-        gridCells[xyToIndex(x+dx, y+dy)].classList.add("filled");
-      });
-      score += shape.length * 10;
-      checkFullLines();
-      updateScore();
-      shapesUsed++;
+    tries++;
+  }
 
-      let now = Date.now();
-      if (playerBehavior.lastMoveTime) {
-        let delta = now - playerBehavior.lastMoveTime;
-        playerBehavior.totalMoves++;
-        if (delta < 3000) playerBehavior.fastMoves++;
-        else playerBehavior.slowMoves++;
-        playerBehavior.avgSpeed = (playerBehavior.avgSpeed * (playerBehavior.totalMoves - 1) + delta) / playerBehavior.totalMoves;
-      }
-      playerBehavior.lastMoveTime = now;
+  // ✅ تأكد أن جميع الأشكال قابلة للوضع
+  const anyFit = shapesInHand.some(shape => canShapeFitAnywhere(shape));
+  if (shapesInHand.length < 3 || !anyFit) {
+    console.warn("🛑 فشل توليد أشكال صالحة – Game Over");
+    showGameOver();
+    return;
+  }
 
-      if (score > 700 && playerBehavior.fastMoves > playerBehavior.slowMoves) {
-        aiInternalNotes.push(`اللاعب سريع وعدواني... احتمال كبير يوصل لأرقام عالية.`);
-      }
-      if (playerBehavior.nearFails >= 3) {
-        aiInternalNotes.push(`اللاعب بينهار بسهولة... محتاج تحفيز مختلف.`);
-      }
-      if (score > 1000 && playerBehavior.perfectClears > 5) {
-        aiInternalNotes.push(`المهارات بدأت تظهر بوضوح... لازم أرفع التحدي.`)
-      }
-// مراقبة تكرار الشكل
-const shapeCode = JSON.stringify(shape);
-if (playerBehavior.lastShapeCode === shapeCode) {
-  playerBehavior.repeatedShapeCount++;
-} else {
-  playerBehavior.repeatedShapeCount = 0;
+  // ✅ توليد العناصر على الشاشة
+  shapesInHand.forEach(shape => {
+    const el = createShapeElement(shape);
+    shapesDiv.appendChild(el);
+
+    el.addEventListener("pointerdown", e => {
+      SoundManager.play('shapePick');
+      e.preventDefault();
+
+      sourceElement = el;
+
+      const cellSize = gridCells[0].getBoundingClientRect().width;
+      document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
+
+      const rect = el.getBoundingClientRect();
+      offset.x = e.clientX - rect.left;
+      offset.y = e.clientY - rect.top;
+
+      floating = el.cloneNode(true);
+      floating.classList.add("floating");
+
+      const maxX = Math.max(...shape.map(([x]) => x));
+      const maxY = Math.max(...shape.map(([_, y]) => y));
+
+      floating.style.width = `${cellSize * (maxX + 1)}px`;
+      floating.style.height = `${cellSize * (maxY + 1)}px`;
+
+      document.body.appendChild(floating);
+
+      const x = e.pageX - offset.x;
+      const y = e.pageY - offset.y - (cellSize * 4);
+
+      floating.style.left = `${x}px`;
+      floating.style.top = `${y}px`;
+
+      pointerStartX = e.pageX;
+      pointerStartY = e.pageY;
+      floatingStartX = x;
+      floatingStartY = y;
+
+      currentShape = shape;
+      lastPointer = { pageX: e.pageX, pageY: e.pageY };
+
+      document.addEventListener("pointermove", trackPointer, { passive: true });
+      animationFrameId = requestAnimationFrame(followPointer);
+
+      el.style.visibility = "hidden";
+    });
+  });
 }
-playerBehavior.lastShapeCode = shapeCode;
 
-// لو كرر نفس الشكل كتير
-if (playerBehavior.repeatedShapeCount >= 3) {
-  showAIReaction('angry');
-  playerBehavior.repeatedShapeCount = 0;
-}
 
-// لو حاول وفشل كتير قبل النجاح
-if (playerBehavior.failedAttempts >= 3) {
-  showAIReaction('angry');
-  playerBehavior.failedAttempts = 0;
-} else {
-  playerBehavior.failedAttempts = 0; // تم النجاح، نبدأ من جديد
-}
 
-      if (shapesUsed >= 3) {
-        generateSmartShapes();
-      }
+let gameOverCheckInterval = null;
+
+function startGameOverWatcher() {
+  clearInterval(gameOverCheckInterval);
+
+  gameOverCheckInterval = setInterval(() => {
+    console.log("🔁 جاري فحص الجيم أوفر...");
+console.log("📌 الأشكال المتبقية فعلياً:", shapesInHand.length, JSON.stringify(shapesInHand));
+
+    const filledCellsCount = gridCells.filter(c => c.classList.contains("filled")).length;
+    const fillRatio = filledCellsCount / gridCells.length;
+
+    if (fillRatio >= 0.75 && !window._alreadyWarnedNearLose) {
+      showAIReaction('nearLose');
+      window._alreadyWarnedNearLose = true;
     }
+
+    shapesInHand.forEach((shape, i) => {
+      const canFit = canShapeFitAnywhere(shape);
+      console.log(`📦 شكل رقم ${i + 1}:`, shape, "✅ ينفع؟", canFit);
+    });
+console.log("📊 فحص الأشكال الحالية:", shapesInHand.map(s => JSON.stringify(s)));
+
+    const anyFit = shapesInHand.some(shape => canPlaceShapeAnywhere(shape));
+    
+
+  if (!anyFit) {
+  console.warn("🛑 مفيش ولا شكل ينفع يتحط – Game Over");
+
+  // 👇 مهم جداً نوقف مراقبة الجيم أوفر
+  clearInterval(gameOverCheckInterval);
+
+  // ✅ نفّذ الجيم أوفر مباشرة
+  showGameOver();
+}
+
+  }, 1000);
+}
+
+
+
+
+
+
+function trackPointer(e) {
+  lastPointer.pageX = e.pageX;
+  lastPointer.pageY = e.pageY;
+}
+
+
+
+function followPointer() {
+  if (!floating || !lastPointer) return;
+
+  const cellSize = gridCells[0].getBoundingClientRect().width;
+  const gridRect = grid.getBoundingClientRect();
+
+  const speedBoost = 1.4;
+
+  const moveX = (lastPointer.pageX - pointerStartX) * speedBoost;
+  const moveY = (lastPointer.pageY - pointerStartY) * speedBoost;
+
+  const x = floatingStartX + moveX;
+  const y = floatingStartY + moveY;
+lastActivityTime = Date.now(); // تحديث وقت النشاط الأخير
+  // 🔄 تحريك الشكل العائم بسرعة أعلى
+  floating.style.left = `${x}px`;
+  floating.style.top = `${y}px`;
+
+  // ✅ حساب موضع الظل بناءً على مركز الشكل مع تعويض 0.5 خلية لتوازن الحركة
+  const gridX = Math.floor((x + cellSize * 0.5 - gridRect.left) / (gridRect.width / 8));
+  const gridY = Math.floor((y + cellSize * 0.5 - gridRect.top) / (gridRect.height / 8));
+
+  if (canPlace(currentShape, gridX, gridY)) {
+    showPreview(currentShape, gridX, gridY);
+  } else {
+    clearPreview();
+  }
+
+  animationFrameId = requestAnimationFrame(followPointer);
+}
+
+
+
+
+
+
+function placeShape(shape, x, y) {
+  shapesInHand = shapesInHand.filter(s => s !== currentShape);
+
+  shape.forEach(([dx, dy]) => {
+    gridCells[xyToIndex(x + dx, y + dy)].classList.add("filled");
+  });
+
+  score += shape.length * 10;
+  checkFullLines();
+  updateScore();
+  shapesUsed++;
+
+  // الجمل التفاعلية للذكاء الاصطناعي
+  if (playerBehavior.repeatedShapeCount >= 3) {
+    showAIReaction('angry');
+    playerBehavior.repeatedShapeCount = 0;
+  }
+
+  if (playerBehavior.failedAttempts >= 3) {
+    showAIReaction('angry');
+    playerBehavior.failedAttempts = 0;
+  }
+
+  if (playerBehavior.totalMoves >= 6 && playerBehavior.perfectClears === 0 && score < 250) {
+    showAIReaction("embarrassed");
+  }
+
+  shapesInHand.forEach((shape, i) => {
+  console.log(`✅ ينفع نحط شكل ${i + 1}?`, canPlaceShapeAnywhere(shape));
+});
+
+  if (shapesUsed >= 3) {
+    generateSmartShapes();
+    shapesUsed = 0;
+
+    // ✅ فحص الجيم أوفر بعد التوليد
+    if (!canPlaceAnyShape()) {
+      console.warn("📛 مفيش مكان لأي شكل – Game Over");
+      showGameOver();
+      return;
+    }
+  }
+}
+    
 // ضع هذا بدلاً من gameLoop القديم
 function runGame() {
   // أكواد اللعبة الحالية هنا
   if (!document.hidden) {
     setTimeout(runGame, 1000/60); // 60 FPS
   }
+  lastActivityTime = Date.now(); // ⏱️ تحديث آخر نشاط
+
 }
+
+
+
+
+
+
 runGame();
 
     function checkFullLines() {
@@ -1764,13 +2041,22 @@ runGame();
   }
 }
 
-    function showGameOver() {
+function showGameOver() {
+  
+  if (screens.gameover.classList.contains("active")) return; // عشان ميتنفذش مرتين
 
+ clearInterval(gameOverCheckInterval);
 
-  clearInterval(monitorInterval);
   playerBehavior.nearFails++;
 
   switchScreen("gameover");
+  // إظهار زر استئناف اللعب فقط
+document.getElementById("resumeBtn").style.display = "inline-block";
+document.getElementById("restartBtn").style.display = "none";
+document.getElementById("insightBtn").style.display = "none";
+
+  
+
 
   finalScoreDisplay.classList.remove("show", "bounce-in");
   resumeBtn.style.display = "inline-block";
@@ -1778,32 +2064,32 @@ runGame();
   restartBtn.style.display = "none";
   countdownEl.style.display = "block";
 
-  // نص عاطفي مبطن وجذاب
-  const motivationalMessages = [
-    
-  ];
-  document.getElementById("motivationalText").textContent = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+ 
 
-  startResumeCountdown();
-  // 🧠 حفظ أداء الجولة الحالية في الذاكرة الساخرة
+startResumeCountdown(); // ← هنا بالضبط
+
+
   const history = JSON.parse(localStorage.getItem("playerHistory") || "[]");
-history.push({
-  score,
-  fastMoves: playerBehavior.fastMoves,
-  slowMoves: playerBehavior.slowMoves,
-  perfectClears: playerBehavior.perfectClears,
-  nearFails: playerBehavior.nearFails,
-  failedAttempts: playerBehavior.failedAttempts || 0,
-  totalMoves: playerBehavior.totalMoves,
-  avgSpeed: playerBehavior.avgSpeed,
-  duration: Date.now() - gameStartTime,
-  mood: aiMemory.mood || "neutral",
-  shapeRepeats: playerBehavior.repeatedShapeCount || 0
-});
-if (history.length > 10) history.shift(); // نحتفظ بآخر 10 جولات
-localStorage.setItem("playerHistory", JSON.stringify(history));
+  history.push({
+    score,
+    fastMoves: playerBehavior.fastMoves,
+    slowMoves: playerBehavior.slowMoves,
+    perfectClears: playerBehavior.perfectClears,
+    nearFails: playerBehavior.nearFails,
+    failedAttempts: playerBehavior.failedAttempts || 0,
+    totalMoves: playerBehavior.totalMoves,
+    avgSpeed: playerBehavior.avgSpeed,
+    duration: Date.now() - gameStartTime,
+    mood: aiMemory.mood || "neutral",
+    shapeRepeats: playerBehavior.repeatedShapeCount || 0
+  });
+  if (history.length > 10) history.shift();
+  localStorage.setItem("playerHistory", JSON.stringify(history));
+ startResumeCountdown();
+
 
 }
+
 
 
 
@@ -1822,10 +2108,21 @@ function resumeGame() {
     
     // مسح أي أشكال متبقية
     shapesDiv.innerHTML = "";
-    
+    generateSmartShapes(); // ← توليد أشكال جديدة بعد الإعلان
+
+    // إعادة تشغيل مراقبة الجيم أوفر بعد الاستئناف
+startGameOverWatcher();
+
     // مسح بعض الخلايا عشوائياً (مثال: 5 خلايا)
 let filledCells = gridCells.filter(cell => cell.classList.contains("filled"));
 let targetToClear = Math.floor(filledCells.length * 0.4); // 40% من المليانين
+
+
+
+let cellSize = 0;
+
+
+
 
 let cellsCleared = 0;
 for (let row = 0; row < 8; row++) {
@@ -1846,13 +2143,13 @@ for (let row = 0; row < 8; row++) {
 
     
     // إعادة توليد الأشكال
-    generateSmartShapes();
-    
+
+
     // العودة إلى شاشة اللعب
     switchScreen("game");
     
     // بدء المراقبة من جديد
-    startMonitor();
+
   };
   
   // محاكاة الإعلان (استبدل هذا ب AdMob)
@@ -2047,22 +2344,7 @@ function showInsightReport() {
       }
     }
 
-    function startMonitor() {
-      clearInterval(monitorInterval);
-      monitorInterval = setInterval(() => {
-        const activeShapes = Array.from(shapesDiv.children).map(el => JSON.parse(el.dataset.shape || "[]"));
-        const playable = activeShapes.some(shape => canShapeFitAnywhere(shape));
-        if (!playable) {
-          clearInterval(monitorInterval);
-          showGameOver();
-        
-          if (Math.random() < 0.07 && aiInternalNotes.length > 0) {
-            const secret = aiInternalNotes[Math.floor(Math.random() * aiInternalNotes.length)];
-            showAIMessage(`🤖 (ملاحظة ذكية): ${secret}`);
-          }
-        }
-      }, 300);
-    }
+    
 
     function clearPreview() {
       gridCells.forEach(cell => {
@@ -2108,48 +2390,81 @@ function showInsightReport() {
       }
     }
 
-    window.addEventListener("pointermove", e => {
-      if (floating) {
-        const cellSize = gridCells[0].getBoundingClientRect().width;
-        const moveX = (e.pageX - pointerStartX) * 1.3;
-        const moveY = (e.pageY - pointerStartY) * 1.3;
 
-        floating.style.left = (floatingStartX + moveX - offset.x) + "px";
-        floating.style.top = (floatingStartY + moveY - offset.y) + "px";
 
-        const rect = grid.getBoundingClientRect();
-        const floatRect = floating.getBoundingClientRect();
-        const gridX = Math.round((floatRect.left - rect.left) / (rect.width / 8));
-        const gridY = Math.round((floatRect.top - rect.top) / (rect.height / 8));
+    let lastPointer = null;
 
-        if (canPlace(currentShape, gridX, gridY)) {
-          showPreview(currentShape, gridX, gridY);
-        } else {
-          clearPreview();
-        }
-      }
-    });
+function animateFloating(e) {
+  
+  
+  if (!e || !e.pageX || !e.pageY) return; // ← حماية من undefined
+  if (!floating || !lastPointer) return;
+  requestAnimationFrame(() => {
+    const centerX = e.pageX - offset.x;
+    const centerY = e.pageY - offset.y;
 
-    window.addEventListener("pointerup", e => {
-      if (!floating || !currentShape) return;
-      const rect = grid.getBoundingClientRect();
-      const floatRect = floating.getBoundingClientRect();
-      const gridX = Math.round((floatRect.left - rect.left) / (rect.width / 8));
-      const gridY = Math.round((floatRect.top - rect.top) / (rect.height / 8));
+    const floatX = centerX - floating.offsetWidth / 2;
+    const floatY = centerY - floating.offsetHeight / 2 - (cellSize * 4);
 
-      if (canPlace(currentShape, gridX, gridY)) {
-        placeShape(currentShape, gridX, gridY);
-        sourceElement.remove();
-      } else {
-        sourceElement.style.visibility = "visible";
-      }
+    floating.style.left = `${floatX}px`;
+    floating.style.top = `${floatY}px`;
 
-      floating.remove();
-      floating = null;
-      currentShape = null;
-      sourceElement = null;
+    if (canPlace(currentShape, gridX, gridY)) {
+      showPreview(currentShape, gridX, gridY);
+    } else {
       clearPreview();
-    });
+    }
+  });
+}
+
+
+window.addEventListener("pointermove", e => {
+  if (!floating) return;
+  lastPointer = e;
+  animateFloating(e);
+});
+
+
+
+
+
+
+document.addEventListener("pointerup", e => {
+  if (!floating) return;
+
+  // 🧠 نحسب مكان الإسقاط بنفس طريقة الشكل العائم (مع سرعة 1.4)
+  const cellSize = gridCells[0].getBoundingClientRect().width;
+  const gridRect = grid.getBoundingClientRect();
+
+  const moveX = (e.pageX - pointerStartX) * 1.4;
+  const moveY = (e.pageY - pointerStartY) * 1.4;
+
+  const boostedX = floatingStartX + moveX;
+  const boostedY = floatingStartY + moveY;
+
+  const gridX = Math.floor((boostedX + cellSize * 0.5 - gridRect.left) / (gridRect.width / 8));
+  const gridY = Math.floor((boostedY + cellSize * 0.5 - gridRect.top) / (gridRect.height / 8));
+
+  if (canPlace(currentShape, gridX, gridY)) {
+    placeShape(currentShape, gridX, gridY);
+    sourceElement.remove(); // حذف الشكل من تحت
+  } else {
+    sourceElement.style.visibility = "visible"; // رجّعه لو فشل
+  }
+
+  clearPreview();
+  floating.remove();
+  floating = null;
+  currentShape = null;
+  sourceElement = null;
+
+  cancelAnimationFrame(animationFrameId);
+});
+
+
+
+
+
 
   let playerData;
 try {
@@ -2360,6 +2675,13 @@ startAvatarIntroduction();
 
 
 
+
+function getTranslation(key) {
+  const lang = localStorage.getItem("lang") || "en";
+  return gameTranslations[lang][key] || key;
+}
+
+
 function changeLanguage() {
   let data = JSON.parse(localStorage.getItem("blockPlayerData")) || {};
   data.language = (data.language === 'ar') ? 'en' : 'ar';
@@ -2473,35 +2795,43 @@ function closeInsight() {
     resetIdleTimer();
 
     function backToMenu() {
-      clearInterval(monitorInterval);
+      
       switchScreen("menu");
     }
-    let countdownTimer;
-let countdownSeconds = 5;
 
+
+
+let countdownTimer;
 function startResumeCountdown() {
-  countdownSeconds = 5;
-  countdownEl.textContent = `Or wait ${countdownSeconds} seconds...`;
-  countdownEl.classList.add("countdown-animate");
-  
-  // إخفاء الزر أثناء العد العكسي
-  document.getElementById("insightBtn").style.display = "none";
-  
-  countdownTimer = setInterval(() => {
-    countdownSeconds--;
-    countdownEl.textContent = `Or wait ${countdownSeconds} seconds...`;
+  let seconds = 5;
 
-    if (countdownSeconds <= 0) {
+  const countdownEl = document.getElementById("countdown");
+  const countdownBarContainer = document.getElementById("countdownBarContainer");
+  const countdownBar = document.getElementById("countdownBar");
+  const restartBtn = document.getElementById("restartBtn");
+  const insightBtn = document.getElementById("insightBtn");
+  const resumeBtn = document.getElementById("resumeBtn");
+
+  countdownEl.style.display = "block";
+  countdownBarContainer.style.display = "block";
+
+  countdownBar.style.width = "100%";
+  countdownBar.style.animation = "countdownShrink 5s linear forwards";
+
+  countdownEl.textContent = `أو انتظر ${seconds} ثواني...`;
+
+  countdownTimer = setInterval(() => {
+    seconds--;
+    if (seconds > 0) {
+      countdownEl.textContent = `أو انتظر ${seconds} ثواني...`;
+    } else {
       clearInterval(countdownTimer);
-      resumeBtn.style.display = "none";
+
       countdownEl.style.display = "none";
-      
-      finalScoreDisplay.textContent = `Score: ${score}`;
-      finalScoreDisplay.classList.add("show", "bounce-in");
+      countdownBarContainer.style.display = "none";
+      resumeBtn.style.display = "none";
       restartBtn.style.display = "inline-block";
-      
-      // إظهار الزر بعد انتهاء العد فقط
-      document.getElementById("insightBtn").style.display = "inline-block";
+      insightBtn.style.display = "inline-block";
     }
   }, 1000);
 }
