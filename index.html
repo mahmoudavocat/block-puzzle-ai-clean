@@ -273,6 +273,7 @@
 
 
 .shape {
+  touch-action: none;
   display: grid;
   grid-template-columns: repeat(4, clamp(20px, 5vmin, 60px));
   grid-template-rows: repeat(4, clamp(20px, 5vmin, 60px));
@@ -1775,12 +1776,23 @@ function normalizeShape(shape) {
     }
 
 
-document.addEventListener("pointermove", e => {
-  if (!floating || e.pointerId !== activePointerId) return;
+document.addEventListener("touchmove", e => {
+  if (!floating || e.touches.length === 0) return;
 
-  lastPointer.pageX = e.pageX;
-  lastPointer.pageY = e.pageY;
+  // احسب مركز اللمستين (أو لمسة واحدة)
+  let totalX = 0, totalY = 0;
+  for (let i = 0; i < e.touches.length; i++) {
+    totalX += e.touches[i].pageX;
+    totalY += e.touches[i].pageY;
+  }
+
+  const centerX = totalX / e.touches.length;
+  const centerY = totalY / e.touches.length;
+
+  lastPointer.pageX = centerX;
+  lastPointer.pageY = centerY;
 });
+
 
 
 function generateSmartShapes() {
