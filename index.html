@@ -276,7 +276,7 @@
   display: grid;
   grid-template-columns: repeat(4, clamp(20px, 5vmin, 60px));
   grid-template-rows: repeat(4, clamp(20px, 5vmin, 60px));
-  gap: 2px;
+  gap: 3px;
   cursor: grab;
   touch-action: none;
 }
@@ -2800,11 +2800,8 @@ function closeInsight() {
     }
 
 
-
 let countdownTimer;
 function startResumeCountdown() {
-  let seconds = 5;
-
   const countdownEl = document.getElementById("countdown");
   const countdownBarContainer = document.getElementById("countdownBarContainer");
   const countdownBar = document.getElementById("countdownBar");
@@ -2812,41 +2809,31 @@ function startResumeCountdown() {
   const insightBtn = document.getElementById("insightBtn");
   const resumeBtn = document.getElementById("resumeBtn");
 
+  let seconds = 5;
+
+  // إعداد مبدئي
   countdownEl.style.display = "block";
   countdownBarContainer.style.display = "block";
-
-  countdownBar.style.width = "100%";
   countdownBar.style.animation = "countdownShrink 5s linear forwards";
-
   countdownEl.textContent = `أو انتظر ${seconds} ثواني...`;
 
+  // عد تنازلي بالنص فقط
   countdownTimer = setInterval(() => {
     seconds--;
     if (seconds > 0) {
       countdownEl.textContent = `أو انتظر ${seconds} ثواني...`;
-    } else {
-      clearInterval(countdownTimer);
-
-      countdownEl.style.display = "none";
-      countdownBarContainer.style.display = "none";
-      resumeBtn.style.display = "none";
-      restartBtn.style.display = "inline-block";
-      insightBtn.style.display = "inline-block";
     }
   }, 1000);
-}
 
-
-
-    function getRandomAIResponse(eventType) {
-  if (typeof aiResponses !== "undefined" && aiResponses[eventType] && aiResponses[eventType].length > 0) {
-    const responses = aiResponses[eventType];
-    const randomIndex = Math.floor(Math.random() * responses.length);
-    console.log("تم اختيار جملة:", responses[randomIndex]);
-    return responses[randomIndex];
-  }
-  console.log("مفيش جمل متاحة للحدث:", eventType);
-  return "";
+  // بعد 5 ثواني بالضبط - نكمل التحول
+  setTimeout(() => {
+    clearInterval(countdownTimer);
+    countdownEl.style.display = "none";
+    countdownBarContainer.style.display = "none";
+    resumeBtn.style.display = "none";
+    restartBtn.style.display = "inline-block";
+    insightBtn.style.display = "inline-block";
+  }, 5000);
 }
 
 
