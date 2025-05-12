@@ -283,16 +283,16 @@
 
 @media (max-width: 600px) {
   #shapes {
-    flex-wrap: nowrap;       /* يمنع القطع تنزل سطر تاني */
-    overflow-x: auto;        /* يسمح بالتمرير لو زاد العرض */
-    justify-content: flex-start; /* ترتيب طبيعي من اليمين */
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: center;
   }
 
   #shapes .shape {
-    grid-template-columns: repeat(4, 24px);
-    grid-template-rows: repeat(4, 24px);
-    gap: 2px;
-    flex: 0 0 auto; /* يمنع التمدد داخل السطر */
+    grid-template-columns: repeat(4, 36px);
+    grid-template-rows: repeat(4, 36px);
+    gap: 1px;
+    flex: 0 0 auto;
   }
 }
 
