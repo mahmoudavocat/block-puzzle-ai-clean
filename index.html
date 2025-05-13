@@ -3241,53 +3241,33 @@ if (realTarget) {
   window.addEventListener('DOMContentLoaded', async () => {
   await preloadEverything(); // هنا بنفترض عندك دالة تحميل أصوات/صور
 
- document.body.addEventListener("touchend", () => {
+
+document.body.addEventListener("touchend", (e) => {
   if (activePointerId !== "touch") return;
+
+  const isOriginalTouchGone = Array.from(e.changedTouches).some(t => t.identifier === activeTouchId);
+  if (!isOriginalTouchGone) return; // ✅ لو اللي خرج مش نفس اللمسة الأصلية، تجاهل
+
   activePointerId = null;
+  activeTouchId = null;
 
   if (!floating) return;
 
-  // حساب الإسقاط (نفس الموجود عندك في pointerup)
   const cellSize = gridCells[0].getBoundingClientRect().width;
-  const moveX = (pointerMoveX - pointerStartX) * 1.4;
-  const moveY = (pointerMoveY - pointerStartY) * 1.4;
+
+  // نستخدم آخر إحداثيات محفوظة
+  const moveX = (lastPointer.pageX - pointerStartX) * 1.4;
+  const moveY = (lastPointer.pageY - pointerStartY) * 1.4;
 
   const boostedX = floatingStartX + moveX;
   const boostedY = floatingStartY + moveY;
 
+  const gridRect = grid.getBoundingClientRect();
   const gridX = Math.floor((boostedX + cellSize * 0.5 - gridRect.left) / (gridRect.width / 8));
   const gridY = Math.floor((boostedY + cellSize * 0.5 - gridRect.top) / (gridRect.height / 8));
 
-  try {
-    if (
-      typeof SoundManager?.context !== "undefined" &&
-      SoundManager.context.state === "suspended"
-    ) {
-      SoundManager.context.resume().then(() => {
-        console.log("🔊 AudioContext resumed ✅");
-      });
-    }
-
-    // ✅ تشغيل صوت خفيف جدًا للتسخين (يفضّل يكون ملف قصير جدًا)
-    const audioPrime = new Audio("assets/sounds/button-click.mp3");
-    audioPrime.volume = 0; // صامت
-    audioPrime.play().catch(() => {}); // مجرد تشغيل لإجبار التهيئة
-
-  } catch (err) {
-    console.warn("⚠️ فشل تهيئة الصوت:", err);
-  }
-}, { once: true });
-
-document.body.addEventListener("touchstart", () => {
-  try {
-    if (typeof SoundManager?.context !== "undefined" && SoundManager.context.state === "suspended") {
-      SoundManager.context.resume();
-      console.log("✅ AudioContext resumed");
-    }
-  } catch (err) {
-    console.warn("⚠️ AudioContext resume failed", err);
-  }
-}, { once: true });
+  tryDropFloatingShape(gridX, gridY);
+});
 
   // ندي فرصة 2 ثانية للعرض
   setTimeout(() => {
