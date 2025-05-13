@@ -1826,6 +1826,8 @@ shape = normalizeShape(shape); // ← مهم جدًا هنا
     shapesDiv.appendChild(el);
 
    el.addEventListener("pointerdown", e => {
+      if (activePointerId !== null && e.pointerId !== activePointerId) return; // ❌ تجاهل أي لمسة إضافية
+  activePointerId = e.pointerId;
   if (activePointerId !== null) return;
   activePointerId = e.pointerId;
 if (e.pointerType === "touch") {
@@ -2464,6 +2466,8 @@ function animateFloating(e) {
 
 
 window.addEventListener("pointermove", e => {
+  if (e.pointerId !== activePointerId) return;
+
   if (!floating) return;
   lastPointer = e;
   animateFloating(e);
