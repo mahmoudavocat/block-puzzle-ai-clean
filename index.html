@@ -1779,8 +1779,11 @@ function normalizeShape(shape) {
 
 
 document.addEventListener("touchend", e => {
-  const touch = e.changedTouches[0];
-  if (activePointerId !== "touch" || touch.identifier !== activeTouchId) return;
+ if (activePointerId !== "touch") return;
+
+const isOurTouchGone = Array.from(e.changedTouches).some(t => t.identifier === activeTouchId);
+if (!isOurTouchGone) return;
+
 
   activePointerId = null;
   activeTouchId = null;
