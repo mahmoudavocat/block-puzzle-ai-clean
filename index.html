@@ -1779,15 +1779,15 @@ function normalizeShape(shape) {
 
 
 document.addEventListener("touchmove", e => {
-  if (!floating || e.touches.length < 1 || activeTouchId === null) return;
+  
+if (activePointerId !== "touch" || !floating) return;
 
-  // دور على اللمسة اللي بدأت السحب
-  const touch = [...e.touches].find(t => t.identifier === activeTouchId);
-  if (!touch) return;
-
-  lastPointer.pageX = touch.pageX;
-  lastPointer.pageY = touch.pageY;
-});
+  const touch = e.touches[0];
+  const moveX = touch.pageX - pointerStartX;
+  const moveY = touch.pageY - pointerStartY;
+  floating.style.left = `${floatingStartX + moveX}px`;
+  floating.style.top = `${floatingStartY + moveY}px`;
+}, { passive: false });
 
 
 
@@ -1822,6 +1822,11 @@ shape = normalizeShape(shape); // ← مهم جدًا هنا
     return;
   }
 
+
+
+
+
+  
   // ✅ توليد العناصر على الشاشة
   shapesInHand.forEach(shape => {
     const el = createShapeElement(shape);
@@ -1830,7 +1835,7 @@ shape = normalizeShape(shape); // ← مهم جدًا هنا
    el.addEventListener("pointerdown", e => {
       if (activePointerId !== null && e.pointerId !== activePointerId) return; // ❌ تجاهل أي لمسة إضافية
   activePointerId = e.pointerId;
-  if (activePointerId !== null) return;
+ 
   activePointerId = e.pointerId;
 if (e.pointerType === "touch") {
   activeTouchId = e.pointerId;
@@ -1883,6 +1888,9 @@ if (e.pointerType === "touch") {
     });
   });
 }
+
+
+
 
 let activeTouchId = null;
 let activePointerId = null;
@@ -3133,7 +3141,11 @@ manager.on('panstart panmove panend', (e) => {
     clientY: e.center.y
   });
 
-  grid.dispatchEvent(event);
+ const realTarget = document.elementFromPoint(e.center.x, e.center.y);
+if (realTarget) {
+  realTarget.dispatchEvent(event);
+}
+
 });
 
 
@@ -3166,7 +3178,11 @@ manager.on('panstart panmove panend', (e) => {
         clientY: e.center.y
       });
   
-      grid.dispatchEvent(event);
+     const realTarget = document.elementFromPoint(e.center.x, e.center.y);
+if (realTarget) {
+  realTarget.dispatchEvent(event);
+}
+
     });
   });
   </script>
@@ -3195,7 +3211,11 @@ manager.on('panstart panmove panend', (e) => {
         clientY: e.center.y
       });
   
-      grid.dispatchEvent(event);
+      const realTarget = document.elementFromPoint(e.center.x, e.center.y);
+if (realTarget) {
+  realTarget.dispatchEvent(event);
+}
+
     });
   
     // ✅ أي استخدام تاني للـ manager لازم يبقى هنا أو بعده
@@ -3205,6 +3225,22 @@ manager.on('panstart panmove panend', (e) => {
   await preloadEverything(); // هنا بنفترض عندك دالة تحميل أصوات/صور
 
  document.body.addEventListener("touchend", () => {
+  if (activePointerId !== "touch") return;
+  activePointerId = null;
+
+  if (!floating) return;
+
+  // حساب الإسقاط (نفس الموجود عندك في pointerup)
+  const cellSize = gridCells[0].getBoundingClientRect().width;
+  const moveX = (pointerMoveX - pointerStartX) * 1.4;
+  const moveY = (pointerMoveY - pointerStartY) * 1.4;
+
+  const boostedX = floatingStartX + moveX;
+  const boostedY = floatingStartY + moveY;
+
+  const gridX = Math.floor((boostedX + cellSize * 0.5 - gridRect.left) / (gridRect.width / 8));
+  const gridY = Math.floor((boostedY + cellSize * 0.5 - gridRect.top) / (gridRect.height / 8));
+
   try {
     if (
       typeof SoundManager?.context !== "undefined" &&
