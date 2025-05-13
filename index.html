@@ -966,14 +966,22 @@ async function preloadEverything() {
   );
 
   // ✅ تحميل ملف الجمل التفاعلية حسب اللغة + النوع
-  const savedData = JSON.parse(localStorage.getItem("blockPlayerData") || "{}");
-  const lang = savedData.language || "ar";
-  const gender = savedData.gender || "male";
-  const playerType = `${lang}_${gender}`;
+  await new Promise((resolve) => {
+  loadAllAIResponses(resolve); // ⬅️ استخدام دالة التحميل الذكية
+});
+
 
   await new Promise((resolve) => {
     const script = document.createElement("script");
-    script.src = `assets/lang/aiResponses_${playerType}.js`;
+   const savedData = JSON.parse(localStorage.getItem("blockPlayerData") || "{}");
+const lang = savedData.language || "ar";
+const gender = savedData.gender || "male";
+const playerType = `${lang}_${gender}`;
+
+script.src = `ai_responses/aiResponses_${playerType}.js`;
+
+
+
     script.onload = () => {
   console.log("✅ تم تحميل ملف الجمل:", script.src);
   
