@@ -2475,7 +2475,10 @@ window.addEventListener("pointermove", e => {
 
 
 document.addEventListener("pointerup", e => {
-  activePointerId = null; // 👈 فك قفل اللمسة لما تخلص
+  if (e.pointerId === activePointerId) {
+  activePointerId = null;
+}
+// 👈 فك قفل اللمسة لما تخلص
 
   if (!floating) return;
 
