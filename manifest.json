@@ -1,27 +1,21 @@
 {
   "name": "Block Puzzle AI",
-  "short_name": "BlockPuzzle",
-  "description": "لعبة تجميع الكتل الممتعة!",
-  "start_url": "/?source=pwa",
+  "short_name": "Puzzle AI",
+  "start_url": "./",
   "display": "fullscreen",
-  "display_override": ["fullscreen", "standalone"],
   "orientation": "portrait",
-  "background_color": "#121212",
-  "theme_color": "#121212",
-  "scope": "/",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
-      "src": "icon-512.png",
+      "src": "icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable any"
+      "type": "image/png"
     }
-  ],
-  "prefer_related_applications": false
+  ]
 }
