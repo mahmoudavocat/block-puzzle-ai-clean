@@ -2144,12 +2144,7 @@ runGame();
       if (totalCleared >= 2) {
         showAIReaction('combo');
       } else {
-      const now = Date.now();
-if (now - lastLineClearTime > 7000) {
-  showAIReaction("lineClear");
-  lastLineClearTime = now;
-}
-
+        showAIReaction('lineClear');
       }
     }, 100);
   }
@@ -2441,7 +2436,7 @@ function showInsightReport() {
       setTimeout(() => {
         aiText.classList.remove("show");
         heatBar.classList.remove("active");
-      }, 5500);
+      }, 3500);
     }
 
     function clearRandomLine() {
