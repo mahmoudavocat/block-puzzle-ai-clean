@@ -1315,6 +1315,8 @@ document.addEventListener('click', function(event) {
     // الكود الأساسي للعبة يبقى كما هو بدون تغيير
     // فقط يتم تعديل دالة showAIReaction لتتناسب مع التصميم الجديد
     
+    let isTouchActive = false;
+
     let messageQueue = [];
     let isShowingMessage = false;
 
@@ -3114,20 +3116,26 @@ document.addEventListener("DOMContentLoaded", () => {
   const Pan = new Hammer.Pan({ threshold: 5 });
   manager.add(Pan);
 
-  manager.on('panstart panmove panend', (e) => {
-    const eventMap = {
-      'panstart': 'pointerdown',
-      'panmove': 'pointermove',
-      'panend': 'pointerup'
-    };
+manager.on('panstart panmove panend', (e) => {
+  const eventMap = {
+    'panstart': 'pointerdown',
+    'panmove': 'pointermove',
+    'panend': 'pointerup'
+  };
 
-    const event = new PointerEvent(eventMap[e.type], {
-      clientX: e.center.x,
-      clientY: e.center.y
-    });
+  // ✅ منع أي لمسة إضافية غير الأولى
+  if (eventMap[e.type] === "pointerdown" && isTouchActive) return;
+  if (eventMap[e.type] === "pointerdown") isTouchActive = true;
+  if (eventMap[e.type] === "pointerup") isTouchActive = false;
 
-    grid.dispatchEvent(event);
+  const event = new PointerEvent(eventMap[e.type], {
+    clientX: e.center.x,
+    clientY: e.center.y
   });
+
+  grid.dispatchEvent(event);
+});
+
 
   // 🟢 تخزينه في window علشان تستخدمه في أماكن تانية لو حبيت
   window.hammerManager = manager;
