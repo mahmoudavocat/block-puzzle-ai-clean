@@ -1778,21 +1778,16 @@ function normalizeShape(shape) {
     }
 
 
-document.addEventListener("touchend", e => {
- if (activePointerId !== "touch") return;
+document.addEventListener("touchmove", e => {
+  
+if (activePointerId !== "touch" || !floating) return;
 
-const isOurTouchGone = Array.from(e.changedTouches).some(t => t.identifier === activeTouchId);
-if (!isOurTouchGone) return;
-
-
-  activePointerId = null;
-  activeTouchId = null;
-
-  if (!floating) return;
-
-  // باقي كود الإسقاط...
-});
-
+  const touch = e.touches[0];
+  const moveX = touch.pageX - pointerStartX;
+  const moveY = touch.pageY - pointerStartY;
+  floating.style.left = `${floatingStartX + moveX}px`;
+  floating.style.top = `${floatingStartY + moveY}px`;
+}, { passive: false });
 
 
 
@@ -1845,6 +1840,23 @@ shape = normalizeShape(shape); // ← مهم جدًا هنا
 if (e.pointerType === "touch") {
   activeTouchId = e.pointerId;
 }
+
+el.addEventListener("touchstart", e => {
+  if (activePointerId !== null) return;
+
+  const touch = e.touches[0];
+  activePointerId = "touch";
+  activeTouchId = touch.identifier;
+
+  pointerStartX = touch.pageX;
+  pointerStartY = touch.pageY;
+  floatingStartX = el.offsetLeft;
+  floatingStartY = el.offsetTop;
+  floating = el;
+
+  el.style.zIndex = 1000;
+  SoundManager.play('shapePick');
+});
 
   SoundManager.play('shapePick');
 
