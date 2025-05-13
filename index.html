@@ -860,15 +860,27 @@ body {
 window.addEventListener("DOMContentLoaded", async () => {
 
   // ✅ تفعيل الصوت من أول لمسة
-  document.body.addEventListener("touchstart", () => {
-    if (SoundManager.context.state === "suspended") {
-      SoundManager.context.resume().then(() => {
-        console.log("🔊 تم تفعيل AudioContext");
-      }).catch(err => {
-        console.warn("❌ فشل تفعيل AudioContext", err);
-      });
+ ["touchstart", "click", "pointerdown"].forEach(evt => {
+  document.body.addEventListener(evt, () => {
+    try {
+      if (SoundManager?.context?.state === "suspended") {
+        SoundManager.context.resume().then(() => {
+          console.log(`🔊 AudioContext resumed by ${evt}`);
+
+          // 🧠 تسخين صوت buttonClick لتفادي اللاج
+          const source = SoundManager.context.createBufferSource();
+          source.buffer = SoundManager.buffers["buttonClick"];
+          source.connect(SoundManager.context.destination);
+          source.start(0);
+          source.stop(SoundManager.context.currentTime + 0.05);
+        });
+      }
+    } catch (err) {
+      console.warn("⚠️ resume أو التسخين فشل:", err);
     }
   }, { once: true });
+});
+
 
   // ✅ تحميل فعلي وانتظار
   const splash = document.getElementById("splashScreen");
@@ -1281,21 +1293,16 @@ function reloadAIResponses() {
 
 
 function getRandomAIResponse(eventType) {
-  if (!window.aiReady || !window.aiResponses) {
-    console.warn("⏳ AI مش جاهز للجمل حتى الآن...");
-    return null;
+  if (typeof aiResponses !== "undefined" && aiResponses[eventType] && aiResponses[eventType].length > 0) {
+    const responses = aiResponses[eventType];
+    const randomIndex = Math.floor(Math.random() * responses.length);
+    console.log("تم اختيار جملة:", responses[randomIndex]);
+    return responses[randomIndex];
   }
-
-  const responses = window.aiResponses[eventType];
-
-  if (!responses || responses.length === 0) {
-    console.warn(`⚠️ مفيش جمل مسجلة للحدث: ${eventType}`);
-    return null;
-  }
-
-  const index = Math.floor(Math.random() * responses.length);
-  return responses[index];
+  console.log("مفيش جمل متاحة للحدث:", eventType);
+  return "";
 }
+
 
 
 
@@ -1368,6 +1375,7 @@ let lastLineClearTime = 0;
 
 
 
+let cellSize = 30; // أو القيمة الفعلية اللي كنت بتستخدمها لحجم الخلية
 
 
 
@@ -1954,8 +1962,8 @@ function startGameOverWatcher() {
   gameOverCheckInterval = setInterval(() => {
     if (isDragging) return; // وقف الفحص أثناء السحب
 
-    console.log("🔁 جاري فحص الجيم أوفر...");
-console.log("📌 الأشكال المتبقية فعلياً:", shapesInHand.length, JSON.stringify(shapesInHand));
+   
+
 
     const filledCellsCount = gridCells.filter(c => c.classList.contains("filled")).length;
     const fillRatio = filledCellsCount / gridCells.length;
@@ -1967,15 +1975,15 @@ console.log("📌 الأشكال المتبقية فعلياً:", shapesInHand.l
 
     shapesInHand.forEach((shape, i) => {
       const canFit = canShapeFitAnywhere(shape);
-      console.log(`📦 شكل رقم ${i + 1}:`, shape, "✅ ينفع؟", canFit);
+     
     });
-console.log("📊 فحص الأشكال الحالية:", shapesInHand.map(s => JSON.stringify(s)));
+
 
     const anyFit = shapesInHand.some(shape => canPlaceShapeAnywhere(shape));
     
 
   if (!anyFit) {
-  console.warn("🛑 مفيش ولا شكل ينفع يتحط – Game Over");
+  
 
   // 👇 مهم جداً نوقف مراقبة الجيم أوفر
   clearInterval(gameOverCheckInterval);
@@ -2068,7 +2076,7 @@ if (score > 500 && playerBehavior.failedAttempts >= 4) {
 }
 
   shapesInHand.forEach((shape, i) => {
-  console.log(`✅ ينفع نحط شكل ${i + 1}?`, canPlaceShapeAnywhere(shape));
+  
 });
 
   if (shapesUsed >= 3) {
@@ -2146,6 +2154,7 @@ runGame();
       } else {
         showAIReaction('lineClear');
       }
+      
     }, 100);
   }
 }
@@ -2504,10 +2513,14 @@ function showInsightReport() {
     let lastPointer = null;
 
 function animateFloating(e) {
-  
-  
-  if (!e || !e.pageX || !e.pageY) return; // ← حماية من undefined
-  if (!floating || !lastPointer) return;
+  if (!e || !e.pageX || !e.pageY) return;
+  if (!floating || !lastPointer || !currentShape) return;
+
+  const gridX = lastPointer.gridX;
+  const gridY = lastPointer.gridY;
+
+  if (typeof gridX === "undefined" || typeof gridY === "undefined") return;
+
   requestAnimationFrame(() => {
     const centerX = e.pageX - offset.x;
     const centerY = e.pageY - offset.y;
@@ -2525,6 +2538,7 @@ function animateFloating(e) {
     }
   });
 }
+
 
 
 window.addEventListener("pointermove", e => {
@@ -2578,7 +2592,7 @@ document.addEventListener("pointerup", e => {
   isDragging = false;
   activePointerId = null;
 
-checkGameOver();
+
 
 });
 
@@ -3038,24 +3052,17 @@ function startAvatarBlink() {
 }
 
 startAvatarBlink();
+
 window.allAIResponses = {}; // مكان تخزين كل الجمل
 
 function loadAllAIResponses(callback) {
- const configs = [
-  'ar_male',
-  'ar_female',
-  'en_male',
-  'en_female'
-];
-
-
+  const configs = ['ar_male', 'ar_female', 'en_male', 'en_female'];
   let loadedCount = 0;
   const totalToLoad = configs.length;
 
   function checkAllLoaded() {
     loadedCount++;
     console.log(`✅ تم تحميل (${loadedCount}/${totalToLoad})`);
-    
     if (loadedCount === totalToLoad) {
       console.log("🎉 اكتمل تحميل جميع ملفات الردود");
       if (callback) callback();
@@ -3073,13 +3080,14 @@ function loadAllAIResponses(callback) {
       checkAllLoaded();
     };
     script.onerror = function() {
-      console.error(`❌ فشل تحميل ملف: aiResponses_${config}.js`);
-      window.allAIResponses[config] = {}; // إنشاء كائن فارغ كبديل
+      console.error(`❌ فشل تحميل: aiResponses_${config}.js`);
       checkAllLoaded();
     };
     document.body.appendChild(script);
   });
 }
+
+
 function toggleSound() {
   isSoundOn = !isSoundOn;
 
