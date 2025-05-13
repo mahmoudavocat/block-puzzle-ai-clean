@@ -1778,16 +1778,18 @@ function normalizeShape(shape) {
     }
 
 
-document.addEventListener("touchmove", e => {
-  
-if (activePointerId !== "touch" || !floating) return;
+document.addEventListener("touchend", e => {
+  const touch = e.changedTouches[0];
+  if (activePointerId !== "touch" || touch.identifier !== activeTouchId) return;
 
-  const touch = e.touches[0];
-  const moveX = touch.pageX - pointerStartX;
-  const moveY = touch.pageY - pointerStartY;
-  floating.style.left = `${floatingStartX + moveX}px`;
-  floating.style.top = `${floatingStartY + moveY}px`;
-}, { passive: false });
+  activePointerId = null;
+  activeTouchId = null;
+
+  if (!floating) return;
+
+  // باقي كود الإسقاط...
+});
+
 
 
 
