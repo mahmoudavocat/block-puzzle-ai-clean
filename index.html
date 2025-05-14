@@ -437,7 +437,7 @@
       opacity: 1;
     }
     
-    #aiText {
+  #aiText {
   font-size: 1.2rem;
   font-weight: 600;
   color: #2196f3;
@@ -450,7 +450,10 @@
   transform: translateY(10px);
   transition: all 0.5s ease;
   margin: 0;
+  direction: rtl;
+  unicode-bidi: isolate;
 }
+
 
     
     #aiText.show {
@@ -1408,7 +1411,7 @@ let lastNearLoseTime = 0;
 
     let gameOverInterval = null;
 
- function showAIReaction(eventType) {
+  function showAIReaction(eventType) {
   console.log("🔥 حدث AI مطلوب:", eventType);
 
   if (eventType === 'lateOpen') {
@@ -1422,6 +1425,7 @@ let lastNearLoseTime = 0;
     processMessageQueue();
   }
 }
+
 
 
 let failedShapePlacements = 0;
@@ -3131,18 +3135,25 @@ if (!(isGameActive || isIntroActive) || document.hidden) {
   heatBar.style.width = "0%";
 
   // بعد ثانية من التفكير، يبدأ يكتب الجملة
-  setTimeout(() => {
-    aiDots.style.display = "none"; // اخفاء النقط
-    let charIndex = 0;
-    function typeNextChar() {
-      if (charIndex < message.length) {
-        aiText.textContent += message[charIndex];
-        charIndex++;
-        setTimeout(typeNextChar, 40); // سرعة الحرف
-      }
+setTimeout(() => {
+  aiDots.style.display = "none";
+  aiText.textContent = "";
+  aiText.style.direction = "rtl";
+  aiText.style.fontFamily = "inherit";
+
+
+  let charIndex = 0;
+  function typeNextChar() {
+    if (charIndex < message.length) {
+      const code = message.codePointAt(charIndex);
+      const char = String.fromCodePoint(code);
+      aiText.textContent += char;
+      charIndex += (code > 0xffff ? 2 : 1);
+      setTimeout(typeNextChar, 40);
     }
-    typeNextChar();
-  }, 1000); // وقت التفكير قبل يبدأ يكتب
+  }
+  typeNextChar();
+}, 1000);
 
   // Hide after 3.5 seconds
   setTimeout(() => {
