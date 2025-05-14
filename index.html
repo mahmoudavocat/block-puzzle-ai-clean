@@ -458,23 +458,7 @@
       transform: translateY(0);
     }
     
-    #aiHeatBar {
-      width: 100%;
-      height: 8px;
-      background: linear-gradient(to right, #ff5722, #ffc107);
-      border-radius: 6px;
-      margin-top: 10px;
-      transform: scaleX(0);
-      transform-origin: left;
-      opacity: 0;
-      transition: transform 3s linear, opacity 0.5s ease;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    }
-    
-    #aiHeatBar.active {
-      transform: scaleX(1);
-      opacity: 1;
-    }
+  
     
     @keyframes bubbleEnter {
       0% { opacity: 0; transform: scale(0.2) rotate(0deg); filter: blur(4px); }
@@ -903,7 +887,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   const waitMinTime = new Promise(res => setTimeout(res, MIN_DISPLAY));
   const preload = preloadEverything();
-  await SoundManager.loadSounds();
+
 
   const maxWait = new Promise(res => setTimeout(res, MAX_WAIT));
 
@@ -1213,7 +1197,7 @@ const Pan = new Hammer.Pan({ threshold: 5 });
         
         <div id="aiBoard" class="hidden">
           <div id="aiText"></div>
-          <div id="aiHeatBar"></div>
+          
         </div>
       </div>
     </div>
@@ -1267,7 +1251,22 @@ const Pan = new Hammer.Pan({ threshold: 5 });
           <div class="ai-dots"><span></span><span></span><span></span></div>
         </div>
       </div>
-      <div id="insightAiBoard" class="show" style="background: white;padding: 20px;border-radius: 20px;box-shadow: 0 4px 12px rgba(0,0,0,0.1);width: 90%;max-width: 400px;height: 220px;display: flex;align-items: center;justify-content: center;overflow: hidden;">
+      <div id="insightAiBoard" class="show" style="
+  background: white;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  width: 90%;
+  max-width: 400px;
+  max-height: 70vh;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow-y: auto;
+  gap: 10px;">
+
         <div id="insightAiText" style="font-size:1.2rem;color:#2196F3;line-height:1.5;text-align:center;"></div>
       </div>
       <button id="shareInsightBtn" class="welcome-btn hidden" onclick="shareInsight()">🔗 شارك التحليل مع صحابك</button>
@@ -1314,15 +1313,16 @@ function reloadAIResponses() {
 
 
 function getRandomAIResponse(eventType) {
-  if (typeof aiResponses !== "undefined" && aiResponses[eventType] && aiResponses[eventType].length > 0) {
-    const responses = aiResponses[eventType];
-    const randomIndex = Math.floor(Math.random() * responses.length);
-    console.log("تم اختيار جملة:", responses[randomIndex]);
-    return responses[randomIndex];
+  if (typeof aiResponses === "undefined" || !aiResponses[eventType]) {
+    console.warn(`⚠️ aiResponses غير معرف أو مفيش جمل للحدث: ${eventType}`);
+    return "";
   }
-  console.log("مفيش جمل متاحة للحدث:", eventType);
-  return "";
+
+  const responses = aiResponses[eventType];
+  const index = Math.floor(Math.random() * responses.length);
+  return responses[index];
 }
+
 
 
 
@@ -1400,36 +1400,51 @@ let smallClearsInARow = 0;
 let lastSecretTime = 0;
 let lastJokeyTime = 0;
 let lastAIReactionTime = 0; // ← بيتحدث كل ما AI يتكلم
+let lastAIEventType = null;
 
+let messageQueue = [];
+let isShowingMessage = false;
 
-    let messageQueue = [];
-    let isShowingMessage = false;
+const eventPriority = {
+  nearLose: 5,
+  angry: 4,
+  embarrassed: 3,
+  combo: 3,
+  lineClear: 2,
+  jokey: 1,
+  idle: 0,
+  secret: 1
+};
 
-    let gameOverInterval = null;
-
- function showAIReaction(eventType) {
-  console.log("🔥 حدث AI مطلوب:", eventType);
-
+function showAIReaction(eventType) {
   if (eventType === 'lateOpen') {
-    // لا تضيفه للـ Queue ولا تعرضه مرتين
-    showSingleAIReaction('lateOpen');
+    showSingleAIReaction(eventType);
     return;
   }
 
-  messageQueue.push(eventType);
-  if (!isShowingMessage) {
-    processMessageQueue();
+  // ✅ لا نسمح بتكرار نفس الحدث إلا إذا الطابور فاضي
+  const alreadyShown = (eventType === lastAIEventType);
+  const queueFull = isShowingMessage || messageQueue.length > 0;
+
+  if (alreadyShown && queueFull) {
+    console.log("🚫 تم تجاهل تكرار الحدث في الزحمة:", eventType);
+    return;
   }
+
+  if (isShowingMessage) {
+    if (messageQueue.length === 0) {
+      messageQueue.push(eventType);
+    } else {
+      const current = messageQueue[0];
+      if (eventPriority[eventType] > eventPriority[current]) {
+        messageQueue[0] = eventType;
+      }
+    }
+    return;
+  }
+
+  showSingleAIReaction(eventType);
 }
-
-
-
-
-
-let cellSize = 30; // أو القيمة الفعلية اللي كنت بتستخدمها لحجم الخلية
-
-
-
 
 function processMessageQueue() {
   if (messageQueue.length === 0) {
@@ -1437,74 +1452,82 @@ function processMessageQueue() {
     return;
   }
 
-  isShowingMessage = true;
-  const eventType = messageQueue.shift();
-  showSingleAIReaction(eventType);
+  const next = messageQueue.shift();
+  showSingleAIReaction(next);
 }
 
-
 function showSingleAIReaction(eventType) {
-  console.log("🔵 داخل showSingleAIReaction للحدث:", eventType);
+  isShowingMessage = true;
+  lastAIReactionTime = Date.now();
 
   const aiBubble = document.getElementById("aiBubble");
   const aiBoard = document.getElementById("aiBoard");
-  const avatarImg = document.getElementById("aiAvatar");
   const aiText = document.getElementById("aiText");
+  const aiAvatar = document.getElementById("aiAvatar");
   const heatBar = document.getElementById("aiHeatBar");
 
-  // 🖼️ تغيير الصورة حسب الحدث
-  switch (eventType) {
-    case "idle":
-      avatarImg.src = "assets/ai_thinking.png";
-      break;
-    case "combo":
-      avatarImg.src = "assets/ai_happy.png";
-      break;
-    case "lineClear":
-      avatarImg.src = "assets/ai_smile.png";
-      break;
-    case "nearLose":
-      avatarImg.src = "assets/ai_worried.png";
-      break;
-    case "angry":
-      avatarImg.src = "assets/ai_angry.png";
-      break;
-    case "shocked":
-      avatarImg.src = "assets/ai_shocked.png";
-      break;
-    case "embarrassed":
-      avatarImg.src = "assets/ai_embarrassed.png";
-      break;
-    default:
-      avatarImg.src = "assets/ai_default.png";
-  }
-// اهتزاز عند الغضب أو القلق
-if (eventType === "angry" || eventType === "nearLose") {
-  avatarImg.classList.add("shake");
-  setTimeout(() => {
-  // نضيف زرار جديد شيك بعد انتهاء الرسالة
-  const avatarWrapper = document.getElementById("avatarWrapper");
-  const startBtn = document.createElement("button");
-  startBtn.innerText = lang === "ar" ? "🎮 يلا نبدأ الرحلة!" : "🎮 Let's Start!";
-  startBtn.className = "welcome-btn";
-  startBtn.style.marginTop = "20px";
-  startBtn.onclick = () => {
-
-    switchScreen("menu");
+  // ✅ تغيير الصورة حسب الحدث
+  const avatarMap = {
+    idle: "ai_thinking.png",
+    combo: "ai_happy.png",
+    lineClear: "ai_smile.png",
+    nearLose: "ai_worried.png",
+    angry: "ai_angry.png",
+    shocked: "ai_shocked.png",
+    embarrassed: "ai_embarrassed.png",
+    default: "ai_default.png"
   };
-  avatarWrapper.appendChild(startBtn);
-}, 1500);
 
+  aiAvatar.src = `assets/${avatarMap[eventType] || avatarMap.default}`;
+
+  // ✅ تشغيل صوت الفقاعة
+const message = getRandomAIResponse(eventType);
+if (!message) {
+  isShowingMessage = false;
+  return;
 }
 
-  const message = getRandomAIResponse(eventType);
-  console.log("🟡 الرسالة اللي طلعت:", message);
+SoundManager.play("bubbleAppear"); // ← تشغيل الصوت فقط لو في رسالة فعلاً
 
-  if (message) {
-    showReactionMessage(message);
-  } else {
-    console.log("🚨 مفيش رسالة طلعت للحدث:", eventType);
-  }
+
+  // ✅ عرض العناصر بصريًا
+  aiBubble.classList.remove("hidden");
+  aiBubble.classList.add("show");
+
+  aiBoard.classList.remove("hidden");
+  aiBoard.classList.add("show");
+
+  aiText.textContent = message;
+  aiText.classList.add("show");
+
+  
+
+  // مدة عرض الجملة والتأثيرات
+  const DISPLAY_TIME = 5000;
+
+  setTimeout(() => {
+    aiBubble.classList.remove("show");
+    aiBubble.classList.add("hide");
+
+    aiBoard.classList.remove("show");
+    aiBoard.classList.add("hide");
+
+    aiText.classList.remove("show");
+    
+
+    setTimeout(() => {
+      aiBubble.classList.remove("hide");
+      aiBubble.classList.add("hidden");
+
+      aiBoard.classList.remove("hide");
+      aiBoard.classList.add("hidden");
+
+      isShowingMessage = false;
+      processMessageQueue();
+    }, 500); // ← تطابق مع تأثير الخروج
+  }, DISPLAY_TIME);
+  lastAIEventType = eventType;
+
 }
 
 
@@ -3110,6 +3133,7 @@ function startResumeCountdown() {
     insightBtn.style.display = "inline-block";
   }, 5000);
 }
+
 
 
 function showReactionMessage(message) {
