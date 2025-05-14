@@ -437,7 +437,7 @@
       opacity: 1;
     }
     
-    #aiText {
+  #aiText {
   font-size: 1.2rem;
   font-weight: 600;
   color: #2196f3;
@@ -450,7 +450,10 @@
   transform: translateY(10px);
   transition: all 0.5s ease;
   margin: 0;
+  direction: rtl;
+  unicode-bidi: isolate;
 }
+
 
     
     #aiText.show {
@@ -916,9 +919,14 @@ window.addEventListener("DOMContentLoaded", async () => {
   setTimeout(() => {
     splash.style.display = "none";
     goToNextScreen();
-    setTimeout(() => {
-  showAIReaction('lateOpen');
+   setTimeout(() => {
+  if (window.aiReady) {
+    showAIReaction("lateOpen");
+  } else {
+    setTimeout(() => showAIReaction("lateOpen"), 500); // تأخير إضافي بسيط
+  }
 }, 1000);
+
 
   }, 700);
 
@@ -1327,6 +1335,21 @@ function getRandomAIResponse(eventType) {
 
 
 
+function checkNearLose() {
+  const filled = gridCells.filter(cell => cell.classList.contains("filled")).length;
+  const ratio = filled / gridCells.length;
+
+  const now = Date.now();
+  const oneMinute = 60 * 1000;
+
+
+  if (ratio >= 0.60 && (now - lastNearLoseTime >= oneMinute)) {
+    showAIReaction("nearLose");
+    lastNearLoseTime = now;
+  }
+}
+
+
 
 
 function setupButtonSounds() {
@@ -1375,23 +1398,37 @@ document.addEventListener('click', function(event) {
     
     let isTouchActive = false;
 let lastLineClearTime = 0;
+let uselessShapesInARow = 0;
+let countingUselessShapes = false;
+let lastSecretTime = 0;
+let lastJokeyTime = 0;
+let lastAIReactionTime = 0; // ← بيتحدث كل ما AI يتكلم
+
+let lastNearLoseTime = 0;
 
     let messageQueue = [];
     let isShowingMessage = false;
 
     let gameOverInterval = null;
 
-    function showAIReaction(eventType) {
+  function showAIReaction(eventType) {
   console.log("🔥 حدث AI مطلوب:", eventType);
+
   if (eventType === 'lateOpen') {
-   showSingleAIReaction('lateOpen');
-}
+    // لا تضيفه للـ Queue ولا تعرضه مرتين
+    showSingleAIReaction('lateOpen');
+    return;
+  }
 
   messageQueue.push(eventType);
   if (!isShowingMessage) {
     processMessageQueue();
   }
 }
+
+
+
+let failedShapePlacements = 0;
 
 
 
@@ -1613,6 +1650,21 @@ function startGame() {
     return; // ⛔ إنهاء مبكر قبل تنفيذ أي شيء آخر
   }
   
+setInterval(() => {
+  const now = Date.now();
+  if (now - lastSecretTime >= 60000 && now - lastAIReactionTime >= 5000) {
+    showAIReaction("secret");
+    lastSecretTime = now;
+  }
+}, 5000); // نراقب كل 5 ثواني
+
+setInterval(() => {
+  const now = Date.now();
+  if (now - lastJokeyTime >= 30000 && now - lastAIReactionTime >= 5000) {
+    showAIReaction("jokey");
+    lastJokeyTime = now;
+  }
+}, 5000); // نراقب كل 5 ثواني
 
   // ✅ بدء مراقبة الخمول (الملل)
   setInterval(() => {
@@ -1893,6 +1945,11 @@ shape = normalizeShape(shape); // ← مهم جدًا هنا
     shapesDiv.appendChild(el);
 
    el.addEventListener("pointerdown", e => {
+    if (playerBehavior.failedAttempts >= 3) {
+  showAIReaction('angry');
+  playerBehavior.failedAttempts = 0;
+}
+
       if (activePointerId !== null && e.pointerId !== activePointerId) return; // ❌ تجاهل أي لمسة إضافية
   activePointerId = e.pointerId;
  
@@ -1991,7 +2048,10 @@ function startGameOverWatcher() {
 
     if (fillRatio >= 0.75 && !window._alreadyWarnedNearLose) {
       showAIReaction('nearLose');
-      window._alreadyWarnedNearLose = true;
+      setTimeout(() => {
+  window._alreadyWarnedNearLose = false;
+}, 10000);
+
     }
 
     shapesInHand.forEach((shape, i) => {
@@ -2066,6 +2126,8 @@ lastActivityTime = Date.now(); // تحديث وقت النشاط الأخير
 
 
 function placeShape(shape, x, y) {
+  failedShapePlacements = 0;
+
   shapesInHand = shapesInHand.filter(s => s !== currentShape);
 
   shape.forEach(([dx, dy]) => {
@@ -2075,6 +2137,8 @@ function placeShape(shape, x, y) {
   score += shape.length * 10;
   checkFullLines();
   updateScore();
+  checkNearLose();
+
   shapesUsed++;
 
   // الجمل التفاعلية للذكاء الاصطناعي
@@ -2111,6 +2175,15 @@ if (score > 500 && playerBehavior.failedAttempts >= 4) {
       return;
     }
   }
+ if (countingUselessShapes) {
+  uselessShapesInARow++;
+  if (uselessShapesInARow >= 6) {
+    showAIReaction("embarrassed");
+    uselessShapesInARow = 0;
+  }
+}
+
+
 }
     
 // ضع هذا بدلاً من gameLoop القديم
@@ -2147,6 +2220,31 @@ runGame();
   }
 
   if (clearedRows.length || clearedCols.length) {
+  
+
+// الحالة 1: مسح 3 صفوف أو أكثر مرة واحدة
+if (totalCleared >= 3) {
+  showAIReaction("shocked");
+  smallClearsInARow = 0; // نبدأ من جديد
+}
+
+// الحالة 2: مسح صف أو صفين
+else if (totalCleared > 0 && totalCleared <= 2) {
+  smallClearsInARow++;
+  if (smallClearsInARow >= 3) {
+    showAIReaction("shocked");
+    smallClearsInARow = 0;
+  }
+} else {
+  // لو مافيش مسح صفوف في اللعبة دي
+  smallClearsInARow = 0;
+}
+
+    countingUselessShapes = true;
+uselessShapesInARow = 0;
+
+    
+
     // أضف هذا الجزء الجديد هنا ↓
     const totalCleared = clearedRows.length + clearedCols.length;
     
@@ -2601,6 +2699,14 @@ document.addEventListener("pointerup", e => {
     sourceElement.remove(); // حذف الشكل من تحت
   } else {
     sourceElement.style.visibility = "visible"; // رجّعه لو فشل
+    failedShapePlacements++;
+console.log("❌ فشل في وضع الشكل - المحاولة رقم", failedShapePlacements);
+
+if (failedShapePlacements >= 3) {
+  showAIReaction('angry');
+  failedShapePlacements = 0;
+}
+
   }
 
   clearPreview();
@@ -2993,6 +3099,7 @@ function startResumeCountdown() {
 }
 
 
+
 function showReactionMessage(message) {
  const isGameActive = document.getElementById("game").classList.contains("active");
 const isIntroActive = document.getElementById("avatarIntroScreen").classList.contains("active");
@@ -3028,18 +3135,25 @@ if (!(isGameActive || isIntroActive) || document.hidden) {
   heatBar.style.width = "0%";
 
   // بعد ثانية من التفكير، يبدأ يكتب الجملة
-  setTimeout(() => {
-    aiDots.style.display = "none"; // اخفاء النقط
-    let charIndex = 0;
-    function typeNextChar() {
-      if (charIndex < message.length) {
-        aiText.textContent += message[charIndex];
-        charIndex++;
-        setTimeout(typeNextChar, 40); // سرعة الحرف
-      }
+setTimeout(() => {
+  aiDots.style.display = "none";
+  aiText.textContent = "";
+  aiText.style.direction = "rtl";
+  aiText.style.fontFamily = "inherit";
+
+
+  let charIndex = 0;
+  function typeNextChar() {
+    if (charIndex < message.length) {
+      const code = message.codePointAt(charIndex);
+      const char = String.fromCodePoint(code);
+      aiText.textContent += char;
+      charIndex += (code > 0xffff ? 2 : 1);
+      setTimeout(typeNextChar, 40);
     }
-    typeNextChar();
-  }, 1000); // وقت التفكير قبل يبدأ يكتب
+  }
+  typeNextChar();
+}, 1000);
 
   // Hide after 3.5 seconds
   setTimeout(() => {
@@ -3086,6 +3200,9 @@ function loadAllAIResponses(callback) {
     console.log(`✅ تم تحميل (${loadedCount}/${totalToLoad})`);
     if (loadedCount === totalToLoad) {
       console.log("🎉 اكتمل تحميل جميع ملفات الردود");
+      window.aiReady = true;
+showAIReaction("lateOpen");
+
       if (callback) callback();
     }
   }
