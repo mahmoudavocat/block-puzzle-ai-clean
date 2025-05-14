@@ -1327,6 +1327,22 @@ function getRandomAIResponse(eventType) {
 
 
 
+function checkNearLose() {
+  const filled = gridCells.filter(cell => cell.classList.contains("filled")).length;
+  const ratio = filled / gridCells.length;
+
+  const now = Date.now();
+  const oneMinute = 10 * 1000;
+
+
+  if (ratio >= 0.60 && (now - lastNearLoseTime >= oneMinute)) {
+    showAIReaction("nearLose");
+    lastNearLoseTime = now;
+  }
+}
+
+
+
 
 
 function setupButtonSounds() {
@@ -1375,23 +1391,37 @@ document.addEventListener('click', function(event) {
     
     let isTouchActive = false;
 let lastLineClearTime = 0;
+let shapesSinceLastClear = 0;
+let failedShapePlacements = 0;
+let uselessShapesInARow = 0;
+let countingUselessShapes = false; // ← نبدأ العد بعد أول نجاح
+let lastNearLoseTime = 0;
+let smallClearsInARow = 0;
+let lastSecretTime = 0;
+let lastJokeyTime = 0;
+let lastAIReactionTime = 0; // ← بيتحدث كل ما AI يتكلم
+
 
     let messageQueue = [];
     let isShowingMessage = false;
 
     let gameOverInterval = null;
 
-    function showAIReaction(eventType) {
+ function showAIReaction(eventType) {
   console.log("🔥 حدث AI مطلوب:", eventType);
+
   if (eventType === 'lateOpen') {
-   showSingleAIReaction('lateOpen');
-}
+    // لا تضيفه للـ Queue ولا تعرضه مرتين
+    showSingleAIReaction('lateOpen');
+    return;
+  }
 
   messageQueue.push(eventType);
   if (!isShowingMessage) {
     processMessageQueue();
   }
 }
+
 
 
 
@@ -1691,6 +1721,21 @@ function canPlaceAnyShape() {
   return shapesInHand.some(shape => canPlaceShapeAnywhere(shape));
 }
 
+setInterval(() => {
+  const now = Date.now();
+  if (now - lastSecretTime >= 60000 && now - lastAIReactionTime >= 5000) {
+    showAIReaction("secret");
+    lastSecretTime = now;
+  }
+}, 5000); // نراقب كل 5 ثواني
+
+setInterval(() => {
+  const now = Date.now();
+  if (now - lastJokeyTime >= 30000 && now - lastAIReactionTime >= 5000) {
+    showAIReaction("jokey");
+    lastJokeyTime = now;
+  }
+}, 5000); // نراقب كل 5 ثواني
 
 
 
@@ -1991,7 +2036,10 @@ function startGameOverWatcher() {
 
     if (fillRatio >= 0.75 && !window._alreadyWarnedNearLose) {
       showAIReaction('nearLose');
-      window._alreadyWarnedNearLose = true;
+      setTimeout(() => {
+  window._alreadyWarnedNearLose = false;
+}, 10000);
+
     }
 
     shapesInHand.forEach((shape, i) => {
@@ -2066,15 +2114,32 @@ lastActivityTime = Date.now(); // تحديث وقت النشاط الأخير
 
 
 function placeShape(shape, x, y) {
+  
+  failedShapePlacements = 0; // ← نبدأ العد من جديد لو نجح في واحدة
+
+  shapesSinceLastClear++;
+if (shapesSinceLastClear >= 6) {
+  showAIReaction('embarrassed');
+  shapesSinceLastClear = 0;
+}
+
   shapesInHand = shapesInHand.filter(s => s !== currentShape);
 
   shape.forEach(([dx, dy]) => {
     gridCells[xyToIndex(x + dx, y + dy)].classList.add("filled");
   });
+shapesSinceLastClear++;
+if (shapesSinceLastClear >= 6) {
+  showAIReaction("embarrassed");
+  shapesSinceLastClear = 0;
+}
 
   score += shape.length * 10;
-  checkFullLines();
-  updateScore();
+checkFullLines();
+updateScore();
+checkNearLose();
+
+
   shapesUsed++;
 
   // الجمل التفاعلية للذكاء الاصطناعي
@@ -2111,6 +2176,15 @@ if (score > 500 && playerBehavior.failedAttempts >= 4) {
       return;
     }
   }
+ if (countingUselessShapes) {
+  uselessShapesInARow++;
+  if (uselessShapesInARow >= 6) {
+    showAIReaction("embarrassed");
+    uselessShapesInARow = 0;
+  }
+}
+
+
 }
     
 // ضع هذا بدلاً من gameLoop القديم
@@ -2145,10 +2219,38 @@ runGame();
       clearedCols.push(col);
     }
   }
+shapesSinceLastClear = 0; // صفينا العداد لأن تم مسح صفوف
 
   if (clearedRows.length || clearedCols.length) {
-    // أضف هذا الجزء الجديد هنا ↓
     const totalCleared = clearedRows.length + clearedCols.length;
+
+// الحالة 1: مسح 3 صفوف أو أكثر مرة واحدة
+if (totalCleared >= 3) {
+  showAIReaction("shocked");
+  smallClearsInARow = 0; // نبدأ من جديد
+}
+
+// الحالة 2: مسح صف أو صفين
+else if (totalCleared > 0 && totalCleared <= 2) {
+  smallClearsInARow++;
+  if (smallClearsInARow >= 3) {
+    showAIReaction("shocked");
+    smallClearsInARow = 0;
+  }
+} else {
+  // لو مافيش مسح صفوف في اللعبة دي
+  smallClearsInARow = 0;
+}
+
+    countingUselessShapes = true;
+uselessShapesInARow = 0;
+
+    uselessShapesInARow = 0;
+
+    shapesSinceLastClear = 0;
+
+    // أضف هذا الجزء الجديد هنا ↓
+    
     
     // تشغيل الصوت المناسب
     if (totalCleared >= 2) {
@@ -2600,7 +2702,24 @@ document.addEventListener("pointerup", e => {
     placeShape(currentShape, gridX, gridY);
     sourceElement.remove(); // حذف الشكل من تحت
   } else {
+    
     sourceElement.style.visibility = "visible"; // رجّعه لو فشل
+    failedShapePlacements++;
+console.log("❌ فشل في وضع الشكل - المحاولة رقم", failedShapePlacements);
+
+if (failedShapePlacements >= 3) {
+  showAIReaction('angry');
+  failedShapePlacements = 0;
+}
+
+    failedShapePlacements++;
+console.log("❌ فشل في وضع الشكل - العدد:", failedShapePlacements);
+
+if (failedShapePlacements >= 3) {
+  showAIReaction('angry');
+  failedShapePlacements = 0;
+}
+
   }
 
   clearPreview();
