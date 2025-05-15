@@ -3719,15 +3719,17 @@ document.body.addEventListener("touchend", (e) => {
 <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(registrations => {
-      for (let registration of registrations) {
-        registration.unregister().then(() => {
-          console.log("✅ Service Worker تم إلغاء تسجيله");
-          location.reload(true); // إعادة تحميل إجباري للملف الجديد
+      for (let reg of registrations) {
+        reg.unregister().then(() => {
+          console.log("🧹 Service Worker تم حذفه بالكامل");
+          localStorage.clear(); // امسح التخزين المؤقت كمان لو حبيت
+          location.reload(true); // تحديث فوري للنسخة الجديدة
         });
       }
     });
   }
 </script>
+
 
 
 </body>
