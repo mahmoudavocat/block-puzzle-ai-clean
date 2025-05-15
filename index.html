@@ -3705,5 +3705,16 @@ document.body.addEventListener("touchend", (e) => {
 
   </script>
   
+
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      for (let reg of registrations) {
+        reg.update(); // تحدث تلقائيًا
+      }
+    });
+  }
+</script>
+
 </body>
 </html>
