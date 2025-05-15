@@ -1594,11 +1594,7 @@ if (!message) {
 
 if (isGameRunning) {
   SoundManager.play("bubbleAppear");
-  if (localStorage.getItem("vibrationEnabled") !== "false") {
-    navigator.vibrate(20); // اهتزاز بسيط جدًا
-  }
 }
-
 
 
 
@@ -2394,10 +2390,6 @@ uselessShapesInARow = 0;
       SoundManager.play('singleClear');
     }
 
-    if (isGameRunning && localStorage.getItem("vibrationEnabled") !== "false") {
-  navigator.vibrate(80); // متوسط
-}
-
     // باقي الكود يبقى كما هو ↓
     clearedRows.forEach(row => {
       for (let col = 0; col < 8; col++) gridCells[xyToIndex(col, row)].classList.remove("filled");
@@ -2472,9 +2464,6 @@ isGameRunning = false;
 let lastScore = score;
 let highestScore = parseInt(localStorage.getItem("blockHighestScore") || "0");
 let playCount = parseInt(localStorage.getItem("blockPlayCount") || "0");
-if (localStorage.getItem("vibrationEnabled") !== "false") {
-  navigator.vibrate([50, 50, 50]);
-}
 
 if (score > highestScore) {
   localStorage.setItem("blockHighestScore", score);
@@ -3079,35 +3068,35 @@ startAvatarIntroduction();
       let highestScore = localStorage.getItem("blockHighestScore") || 0;
       let lastScore = localStorage.getItem("blockLastScore") || 0;
       let playCount = localStorage.getItem("blockPlayCount") || 0;
-   
+      let aiEnabled = localStorage.getItem("aiModeEnabled") !== "false";
 
 
-
-let aiEnabled = localStorage.getItem("aiModeEnabled") !== "false";
 let soundEnabled = localStorage.getItem("soundEnabled") !== "false";
-let vibrationEnabled = localStorage.getItem("vibrationEnabled") !== "false";
 
 let statsHTML = `
-  ...
+  <div class="row">${t.genderLabel}: ${savedData.gender === 'male' ? (lang === 'ar' ? 'ولد' : 'Boy') : (lang === 'ar' ? 'بنت' : 'Girl')}
+    <button onclick="changeGender()">${t.change}</button>
+  </div>
+  <div class="row">${t.langLabel}: ${lang === 'ar' ? 'العربية' : 'English'}
+    <button onclick="changeLanguage()">${t.change}</button>
+  </div>
+  <div class="row">${t.highScore}: ${highestScore}</div>
+  <div class="row">${t.lastScore}: ${lastScore}</div>
+  <div class="row">${t.playCount}: ${playCount}</div>
+  <hr style="width:100%;margin:10px 0;">
   <div class="row">${t.aiMessage}:
     <button id="aiModeToggleBtn" onclick="toggleAIMode()">
       ${aiEnabled ? t.aiStatusOn : t.aiStatusOff}
     </button>
   </div>
-
   <div class="row">${t.soundLabel}:
     <button id="soundToggleBtn" onclick="toggleSoundSetting()">
       ${soundEnabled ? t.soundOn : t.soundOff}
     </button>
   </div>
-
-  <div class="row">${t.vibrationLabel}:
-    <button id="vibrationToggleBtn" onclick="toggleVibrationSetting()">
-      ${vibrationEnabled ? t.vibrationOn : t.vibrationOff}
-    </button>
-  </div>
-  ...
+  <div style="margin-top: 10px; color: #4CAF50;">${gameTranslations[lang].levelMessage}</div>
 `;
+
 
 
 
@@ -3149,21 +3138,6 @@ function toggleSoundSetting() {
   const btn = document.getElementById("soundToggleBtn");
   if (btn) {
     btn.textContent = isSoundOn ? t.soundOn : t.soundOff;
-  }
-}
-
-
-
-
-function toggleVibrationSetting() {
-  const current = localStorage.getItem("vibrationEnabled");
-  const newValue = current === "false" ? "true" : "false";
-  localStorage.setItem("vibrationEnabled", newValue);
-
-  const t = applyLanguageText(playerData.language || "ar");
-  const btn = document.getElementById("vibrationToggleBtn");
-  if (btn) {
-    btn.textContent = newValue === "true" ? t.vibrationOn : t.vibrationOff;
   }
 }
 
