@@ -1,32 +1,38 @@
 {
   "name": "Block Puzzle AI",
-  "short_name": "PuzzleAI",
-  "description": "لعبة ذكاء تفاعلية ممتعة وتحدي حقيقي للدماغ!",
-  "start_url": "./index.html",
+  "short_name": "Puzzle AI",
+  "description": "لعبة ذكاء ممتعة مع مساعد ذكي يتفاعل معك!",
+  "id": "/",
+  "start_url": "/?source=pwa",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#2196F3",
+  "display_override": ["standalone", "fullscreen"],
+  "orientation": "portrait",
+  "theme_color": "#121212",
+  "background_color": "#121212",
   "icons": [
     {
-      "src": "assets/icons/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "assets/icons/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "maskable any"
     }
   ],
-  "id": "/?app=pwa",
-  "launch_handler": {
-    "client_mode": "focus-existing"
-  },
   "screenshots": [
     {
-      "src": "assets/screenshots/shot1.png",
+      "src": "assets/screen1.png",
+      "sizes": "540x960",
       "type": "image/png",
-      "sizes": "640x480"
+      "label": "واجهة اللعبة"
     }
-  ]
+  ],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "scope": "/"
 }
