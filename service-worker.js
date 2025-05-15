@@ -1,5 +1,6 @@
-const cacheName = "block-puzzle-cache-v2";
+const cacheName = "block-puzzle-cache-v3"; // ✅ غير رقم النسخة للتأكد من تحديث الكاش
 const assetsToCache = [
+  "/",
   "/index.html",
   "/manifest.json",
   "/offline.html",
@@ -17,19 +18,38 @@ const assetsToCache = [
   "/assets/sounds/bubble-appear.mp3"
 ];
 
-self.addEventListener("install", (e) => {
-  self.skipWaiting(); // ⬅️ مهم جدًا!
-  e.waitUntil(
-    caches.open(cacheName).then((cache) => cache.addAll(assetsToCache))
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(cacheName).then((cache) => {
+      return cache.addAll(assetsToCache);
+    })
   );
 });
 
-self.addEventListener("activate", (e) => {
-  clients.claim(); // ⬅️ عشان يبدأ يشتغل فورًا
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((key) => key !== cacheName)
+          .map((key) => caches.delete(key))
+      )
+    )
+  );
+  clients.claim();
 });
 
-self.addEventListener("fetch", (e) => {
-  e.respondWith(
-    fetch(e.request).catch(() => caches.match(e.request).then(res => res || caches.match("/offline.html")))
+self.addEventListener("fetch", (event) => {
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        return response;
+      })
+      .catch(() => {
+        return caches.match(event.request).then((res) => {
+          return res || caches.match("/offline.html");
+        });
+      })
   );
 });
