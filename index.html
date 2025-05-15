@@ -3716,5 +3716,19 @@ document.body.addEventListener("touchend", (e) => {
   }
 </script>
 
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      for (let registration of registrations) {
+        registration.unregister().then(() => {
+          console.log("✅ Service Worker تم إلغاء تسجيله");
+          location.reload(true); // إعادة تحميل إجباري للملف الجديد
+        });
+      }
+    });
+  }
+</script>
+
+
 </body>
 </html>
