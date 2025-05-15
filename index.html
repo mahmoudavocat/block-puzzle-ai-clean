@@ -14,6 +14,15 @@
 
 
   <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(() => console.log('✅ Service Worker registered'))
+      .catch(err => console.error('❌ Service Worker failed:', err));
+  }
+</script>
+
+
+  <script>
     function enterFullscreen() {
       if (document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen();
@@ -39,6 +48,142 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <style>
 
+
+
+
+#aiModeToggleBtn,
+#soundToggleBtn {
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: linear-gradient(45deg, #2196F3, #21CBF3);
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(33, 150, 243, 0.4);
+}
+
+#aiModeToggleBtn:hover,
+#soundToggleBtn:hover {
+  background: linear-gradient(45deg, #00C853, #00E676);
+  box-shadow: 0 0 14px rgba(0, 230, 118, 0.5);
+}
+
+.enhanced-welcome {
+  background: linear-gradient(145deg, #f9f9f9, #ffffff);
+  border-radius: 25px;
+  padding: 40px 30px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  max-width: 420px;
+  margin: auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  animation: fadeIn 0.7s ease-in-out;
+}
+
+.welcome-title {
+  font-size: 1.4rem;
+  color: #2196F3;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+}
+
+.hero-btn {
+  background: #E3F2FD;
+  color: #0D47A1;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  min-width: 120px;
+}
+
+.hero-btn:hover {
+  background: #BBDEFB;
+}
+
+.step p {
+  font-size: 1.1rem;
+  color: #444;
+  margin-bottom: 10px;
+}
+
+
+#playerStatsCard {
+  background: #fff;
+  border-radius: 25px;
+  padding: 30px;
+  max-width: 420px;
+  margin: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  animation: fadeInCard 0.5s ease;
+  text-align: center;
+}
+
+.stats-title {
+  color: #2196F3;
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+}
+
+.stats-content {
+  font-size: 1rem;
+  line-height: 1.8;
+  width: 100%;
+}
+
+.stats-content .row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 8px 0;
+}
+
+.stats-content button {
+  padding: 5px 10px;
+  font-size: 0.85rem;
+  border-radius: 10px;
+  background-color: #E3F2FD;
+  border: 1px solid #90CAF9;
+  color: #0D47A1;
+  cursor: pointer;
+}
+
+
+
+
+
+#languageGenderCard {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 25px;
+  max-width: 400px;
+  margin: auto;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  animation: fadeInCard 0.6s ease;
+}
 
 
   #countdownBarContainer {
@@ -458,23 +603,7 @@
       transform: translateY(0);
     }
     
-    #aiHeatBar {
-      width: 100%;
-      height: 8px;
-      background: linear-gradient(to right, #ff5722, #ffc107);
-      border-radius: 6px;
-      margin-top: 10px;
-      transform: scaleX(0);
-      transform-origin: left;
-      opacity: 0;
-      transition: transform 3s linear, opacity 0.5s ease;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    }
-    
-    #aiHeatBar.active {
-      transform: scaleX(1);
-      opacity: 1;
-    }
+  
     
     @keyframes bubbleEnter {
       0% { opacity: 0; transform: scale(0.2) rotate(0deg); filter: blur(4px); }
@@ -783,37 +912,9 @@
   box-shadow: 0 6px 18px rgba(0,0,0,0.2);
 }
 
-.sound-btn {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 48px;
-  height: 48px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 2px solid #2196F3;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  transition: all 0.3s ease;
-}
 
-.sound-btn:hover {
-  background: #2196F3;
-  transform: scale(1.1);
-}
 
-.sound-btn:hover svg {
-  stroke: white;
-  fill: white;
-}
 
-.sound-btn svg {
-  transition: all 0.3s ease;
-}
 
 
 .welcome-card {
@@ -903,7 +1004,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   const waitMinTime = new Promise(res => setTimeout(res, MIN_DISPLAY));
   const preload = preloadEverything();
-  await SoundManager.loadSounds();
+
 
   const maxWait = new Promise(res => setTimeout(res, MAX_WAIT));
 
@@ -916,9 +1017,13 @@ window.addEventListener("DOMContentLoaded", async () => {
   setTimeout(() => {
     splash.style.display = "none";
     goToNextScreen();
-    setTimeout(() => {
-  showAIReaction('lateOpen');
-}, 1000);
+   const firstVisitDone = localStorage.getItem("firstVisitDone");
+if (firstVisitDone === "true") {
+  setTimeout(() => {
+    showAIReaction('lateOpen');
+  }, 1000);
+}
+
 
   }, 700);
 
@@ -1104,35 +1209,27 @@ const Pan = new Hammer.Pan({ threshold: 5 });
    <div id="splashScreen" class="splash-screen">
     <img src="assets/nova_logo.png" alt="NovaCode Studio Logo" class="studio-logo">
    
-  </div>
-  <div class="welcome-screen" id="welcomeScreen">
-    <div class="welcome-card">
-      <p id="welcomeText" style="display:none;"></p>
+  </div><div class="welcome-screen" id="welcomeScreen">
+  <div class="welcome-card enhanced-welcome">
+    <h2 class="welcome-title" id="welcomeText" style="display: none;"></h2>
 
+    <div id="langButtons" class="btn-group">
+      <button onclick="chooseLanguage('ar')" class="hero-btn">🇸🇦 عربي</button>
+      <button onclick="chooseLanguage('en')" class="hero-btn">🇺🇸 English</button>
+    </div>
 
-      <div id="langButtons" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 10px;">
-        <button onclick="chooseLanguage('ar')" class="welcome-btn">🌍 عربي</button>
-        <button onclick="chooseLanguage('en')" class="welcome-btn">🌍 English</button>
+    <div id="step2" class="step" style="display: none;">
+      <p id="genderText">👤 إنت ولد ولا بنت؟</p>
+      <div class="btn-group">
+        <button onclick="chooseGender('male')" class="hero-btn">🚹 ولد</button>
+        <button onclick="chooseGender('female')" class="hero-btn">🚺 بنت</button>
       </div>
-      
-     
-<div id="step2" style="display:none; margin-top: 20px;">
-  <p id="genderText">👤 إنت ولد ولا بنت؟</p>
-  <div style="display: flex; gap: 20px; justify-content: center; margin-top: 10px;">
-    <button onclick="chooseGender('male')" class="welcome-btn">🚹 ولد</button>
-    <button onclick="chooseGender('female')" class="welcome-btn">🚺 بنت</button>
+    </div>
+
+    <div id="finalStep" style="display:none;"></div>
   </div>
 </div>
-
-      
-
-      
-      <div id="finalStep" style="display:none;"></div>
-
-      
-    </div>
-  </div>
-</div> <!-- نهاية welcomeScreen -->
+!-- نهاية welcomeScreen -->
 
 <!-- هنا تحط شاشة avatarIntroScreen الجديدة -->
 <div class="welcome-screen hidden" id="avatarIntroScreen">
@@ -1175,12 +1272,7 @@ const Pan = new Hammer.Pan({ threshold: 5 });
       <h1 class="game-title">Block Puzzle AI</h1>
       <button class="btn start-btn" onclick="startGame()">ابدأ رحلتي</button>
       <button class="btn stats-btn" onclick="showPlayerStats()">📈 بياناتي</button>
-     <button id="soundToggleBtn" class="sound-btn" onclick="toggleSound()">
-  <svg viewBox="0 0 24 24" width="24" height="24">
-    <path id="soundIcon" fill="#2196F3"
-      d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
-  </svg>
-</button>
+   
 
       <p class="copyright">By: NovaCode Studio © 2025</p>
   
@@ -1213,7 +1305,7 @@ const Pan = new Hammer.Pan({ threshold: 5 });
         
         <div id="aiBoard" class="hidden">
           <div id="aiText"></div>
-          <div id="aiHeatBar"></div>
+          
         </div>
       </div>
     </div>
@@ -1232,7 +1324,8 @@ const Pan = new Hammer.Pan({ threshold: 5 });
     
     <button class="golden-btn" id="resumeBtn" onclick="resumeGame()">✨ استكمل اللعب</button>
     <button class="btn" id="restartBtn" style="display:none;" onclick="restartGame()">ابدأ من جديد</button>
-    <button class="btn golden-btn" id="insightBtn" onclick="showInsightReport()" style="margin-top: 10px; font-size: 1.1rem;">...</button>
+    <button class="btn golden-btn" id="insightBtn" onclick="showInsightReport()" style="margin-top: 10px; font-size: 1.1rem;">📘 التقرير النفسي</button>
+
 <p id="countdown" class="countdown-animate" style="display:none;"></p>
 
 <div id="countdownBarContainer">
@@ -1251,12 +1344,13 @@ const Pan = new Hammer.Pan({ threshold: 5 });
   
 
   <div id="playerStats" class="welcome-screen" style="display:none;">
-    <div class="welcome-card">
-      <p id="statsText">بيانات اللاعب:</p>
-      <div id="statsContent"></div>
-      <button class="btn" id="backBtn" onclick="closeStats()">🔙 رجوع</button>
-    </div>
+  <div class="welcome-card" id="playerStatsCard">
+    <h2 id="statsText" class="stats-title">📈 بياناتك</h2>
+    <div id="statsContent" class="stats-content"></div>
+    <button class="welcome-btn" id="backBtn" onclick="closeStats()">🔙 رجوع</button>
   </div>
+</div>
+
   
 
   <div class="welcome-screen hidden fade-in" id="insightScreen">
@@ -1267,7 +1361,22 @@ const Pan = new Hammer.Pan({ threshold: 5 });
           <div class="ai-dots"><span></span><span></span><span></span></div>
         </div>
       </div>
-      <div id="insightAiBoard" class="show" style="background: white;padding: 20px;border-radius: 20px;box-shadow: 0 4px 12px rgba(0,0,0,0.1);width: 90%;max-width: 400px;height: 220px;display: flex;align-items: center;justify-content: center;overflow: hidden;">
+      <div id="insightAiBoard" class="show" style="
+  background: white;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  width: 90%;
+  max-width: 400px;
+  max-height: 70vh;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow-y: auto;
+  gap: 10px;">
+
         <div id="insightAiText" style="font-size:1.2rem;color:#2196F3;line-height:1.5;text-align:center;"></div>
       </div>
       <button id="shareInsightBtn" class="welcome-btn hidden" onclick="shareInsight()">🔗 شارك التحليل مع صحابك</button>
@@ -1314,16 +1423,33 @@ function reloadAIResponses() {
 
 
 function getRandomAIResponse(eventType) {
-  if (typeof aiResponses !== "undefined" && aiResponses[eventType] && aiResponses[eventType].length > 0) {
-    const responses = aiResponses[eventType];
-    const randomIndex = Math.floor(Math.random() * responses.length);
-    console.log("تم اختيار جملة:", responses[randomIndex]);
-    return responses[randomIndex];
+  if (typeof aiResponses === "undefined" || !aiResponses[eventType]) {
+    console.warn(`⚠️ aiResponses غير معرف أو مفيش جمل للحدث: ${eventType}`);
+    return "";
   }
-  console.log("مفيش جمل متاحة للحدث:", eventType);
-  return "";
+
+  const responses = aiResponses[eventType];
+  const index = Math.floor(Math.random() * responses.length);
+  return responses[index];
 }
 
+
+
+
+
+function checkNearLose() {
+  const filled = gridCells.filter(cell => cell.classList.contains("filled")).length;
+  const ratio = filled / gridCells.length;
+
+  const now = Date.now();
+  const oneMinute = 10 * 1000;
+
+
+  if (ratio >= 0.60 && (now - lastNearLoseTime >= oneMinute)) {
+    showAIReaction("nearLose");
+    lastNearLoseTime = now;
+  }
+}
 
 
 
@@ -1372,34 +1498,67 @@ document.addEventListener('click', function(event) {
 
     // الكود الأساسي للعبة يبقى كما هو بدون تغيير
     // فقط يتم تعديل دالة showAIReaction لتتناسب مع التصميم الجديد
-    
-    let isTouchActive = false;
+let isGameRunning = false;
+let isTouchActive = false;
 let lastLineClearTime = 0;
+let shapesSinceLastClear = 0;
+let failedShapePlacements = 0;
+let uselessShapesInARow = 0;
+let countingUselessShapes = false; // ← نبدأ العد بعد أول نجاح
+let lastNearLoseTime = 0;
+let smallClearsInARow = 0;
+let lastSecretTime = 0;
+let lastJokeyTime = 0;
+let lastAIReactionTime = 0; // ← بيتحدث كل ما AI يتكلم
+let lastAIEventType = null;
+let messageQueue = [];
+let isShowingMessage = false;
 
-    let messageQueue = [];
-    let isShowingMessage = false;
+const eventPriority = {
+  nearLose: 5,
+  angry: 4,
+  embarrassed: 3,
+  combo: 3,
+  lineClear: 2,
+  jokey: 1,
+  idle: 0,
+  secret: 1
+};
 
-    let gameOverInterval = null;
+function showAIReaction(eventType) {
+    const aiEnabled = localStorage.getItem("aiModeEnabled") !== "false";
+  if (!aiEnabled) return;
 
-    function showAIReaction(eventType) {
-  console.log("🔥 حدث AI مطلوب:", eventType);
+  if (!isGameRunning) return;
+
   if (eventType === 'lateOpen') {
-   showSingleAIReaction('lateOpen');
-}
-
-  messageQueue.push(eventType);
-  if (!isShowingMessage) {
-    processMessageQueue();
+    showSingleAIReaction(eventType);
+    return;
   }
+
+  // ✅ لا نسمح بتكرار نفس الحدث إلا إذا الطابور فاضي
+  const alreadyShown = (eventType === lastAIEventType);
+  const queueFull = isShowingMessage || messageQueue.length > 0;
+
+  if (alreadyShown && queueFull) {
+    console.log("🚫 تم تجاهل تكرار الحدث في الزحمة:", eventType);
+    return;
+  }
+
+  if (isShowingMessage) {
+    if (messageQueue.length === 0) {
+      messageQueue.push(eventType);
+    } else {
+      const current = messageQueue[0];
+      if (eventPriority[eventType] > eventPriority[current]) {
+        messageQueue[0] = eventType;
+      }
+    }
+    return;
+  }
+
+  showSingleAIReaction(eventType);
 }
-
-
-
-
-let cellSize = 30; // أو القيمة الفعلية اللي كنت بتستخدمها لحجم الخلية
-
-
-
 
 function processMessageQueue() {
   if (messageQueue.length === 0) {
@@ -1407,74 +1566,86 @@ function processMessageQueue() {
     return;
   }
 
-  isShowingMessage = true;
-  const eventType = messageQueue.shift();
-  showSingleAIReaction(eventType);
+  const next = messageQueue.shift();
+  showSingleAIReaction(next);
 }
 
-
 function showSingleAIReaction(eventType) {
-  console.log("🔵 داخل showSingleAIReaction للحدث:", eventType);
+  isShowingMessage = true;
+  lastAIReactionTime = Date.now();
 
   const aiBubble = document.getElementById("aiBubble");
   const aiBoard = document.getElementById("aiBoard");
-  const avatarImg = document.getElementById("aiAvatar");
   const aiText = document.getElementById("aiText");
+  const aiAvatar = document.getElementById("aiAvatar");
   const heatBar = document.getElementById("aiHeatBar");
 
-  // 🖼️ تغيير الصورة حسب الحدث
-  switch (eventType) {
-    case "idle":
-      avatarImg.src = "assets/ai_thinking.png";
-      break;
-    case "combo":
-      avatarImg.src = "assets/ai_happy.png";
-      break;
-    case "lineClear":
-      avatarImg.src = "assets/ai_smile.png";
-      break;
-    case "nearLose":
-      avatarImg.src = "assets/ai_worried.png";
-      break;
-    case "angry":
-      avatarImg.src = "assets/ai_angry.png";
-      break;
-    case "shocked":
-      avatarImg.src = "assets/ai_shocked.png";
-      break;
-    case "embarrassed":
-      avatarImg.src = "assets/ai_embarrassed.png";
-      break;
-    default:
-      avatarImg.src = "assets/ai_default.png";
-  }
-// اهتزاز عند الغضب أو القلق
-if (eventType === "angry" || eventType === "nearLose") {
-  avatarImg.classList.add("shake");
-  setTimeout(() => {
-  // نضيف زرار جديد شيك بعد انتهاء الرسالة
-  const avatarWrapper = document.getElementById("avatarWrapper");
-  const startBtn = document.createElement("button");
-  startBtn.innerText = lang === "ar" ? "🎮 يلا نبدأ الرحلة!" : "🎮 Let's Start!";
-  startBtn.className = "welcome-btn";
-  startBtn.style.marginTop = "20px";
-  startBtn.onclick = () => {
-
-    switchScreen("menu");
+  // ✅ تغيير الصورة حسب الحدث
+  const avatarMap = {
+    idle: "ai_thinking.png",
+    combo: "ai_happy.png",
+    lineClear: "ai_smile.png",
+    nearLose: "ai_worried.png",
+    angry: "ai_angry.png",
+    shocked: "ai_shocked.png",
+    embarrassed: "ai_embarrassed.png",
+    default: "ai_default.png"
   };
-  avatarWrapper.appendChild(startBtn);
-}, 1500);
 
+  aiAvatar.src = `assets/${avatarMap[eventType] || avatarMap.default}`;
+
+  // ✅ تشغيل صوت الفقاعة
+const message = getRandomAIResponse(eventType);
+if (!message) {
+  isShowingMessage = false;
+  return;
 }
 
-  const message = getRandomAIResponse(eventType);
-  console.log("🟡 الرسالة اللي طلعت:", message);
+if (isGameRunning) {
+  SoundManager.play("bubbleAppear");
+}
 
-  if (message) {
-    showReactionMessage(message);
-  } else {
-    console.log("🚨 مفيش رسالة طلعت للحدث:", eventType);
-  }
+
+
+  // ✅ عرض العناصر بصريًا
+  aiBubble.classList.remove("hidden");
+  aiBubble.classList.add("show");
+
+  aiBoard.classList.remove("hidden");
+  aiBoard.classList.add("show");
+
+  aiText.textContent = message;
+  aiText.classList.add("show");
+
+  
+
+  // مدة عرض الجملة والتأثيرات
+  const DISPLAY_TIME = 3500 + Math.floor(Math.random() * 1500); // من 3.5 إلى 5 ثواني
+
+
+  setTimeout(() => {
+    aiBubble.classList.remove("show");
+    aiBubble.classList.add("hide");
+
+    aiBoard.classList.remove("show");
+    aiBoard.classList.add("hide");
+
+    aiText.classList.remove("show");
+    
+
+    setTimeout(() => {
+      aiBubble.classList.remove("hide");
+      aiBubble.classList.add("hidden");
+
+      aiBoard.classList.remove("hide");
+      aiBoard.classList.add("hidden");
+
+      isShowingMessage = false;
+      processMessageQueue();
+    }, 500); // ← تطابق مع تأثير الخروج
+  }, DISPLAY_TIME);
+  lastAIEventType = eventType;
+
 }
 
 
@@ -1601,6 +1772,7 @@ if (canvas) {
 }
 
 function startGame() {
+  isGameRunning = true;
   console.log("🎮 تم تشغيل startGame()");
   gameStartTime = Date.now();
   lastActivityTime = Date.now();
@@ -1649,6 +1821,8 @@ function startGame() {
   // ✅ مراقبة الأداء السيئ
   setTimeout(() => {
     const checkBadPerformance = setInterval(() => {
+      if (!isGameRunning) return;
+
       const elapsed = Date.now() - gameStartTime;
       console.log("⏱ وقت اللعب:", elapsed, "📉 النقاط:", score, "🔥 كمبو:", playerBehavior.perfectClears);
       if (score < 350 && elapsed > 25000 && playerBehavior.perfectClears === 0) {
@@ -1691,6 +1865,21 @@ function canPlaceAnyShape() {
   return shapesInHand.some(shape => canPlaceShapeAnywhere(shape));
 }
 
+setInterval(() => {
+  const now = Date.now();
+  if (now - lastSecretTime >= 60000 && now - lastAIReactionTime >= 5000) {
+    showAIReaction("secret");
+    lastSecretTime = now;
+  }
+}, 5000); // نراقب كل 5 ثواني
+
+setInterval(() => {
+  const now = Date.now();
+  if (now - lastJokeyTime >= 30000 && now - lastAIReactionTime >= 5000) {
+    showAIReaction("jokey");
+    lastJokeyTime = now;
+  }
+}, 5000); // نراقب كل 5 ثواني
 
 
 
@@ -1991,7 +2180,10 @@ function startGameOverWatcher() {
 
     if (fillRatio >= 0.75 && !window._alreadyWarnedNearLose) {
       showAIReaction('nearLose');
-      window._alreadyWarnedNearLose = true;
+      setTimeout(() => {
+  window._alreadyWarnedNearLose = false;
+}, 10000);
+
     }
 
     shapesInHand.forEach((shape, i) => {
@@ -2066,15 +2258,32 @@ lastActivityTime = Date.now(); // تحديث وقت النشاط الأخير
 
 
 function placeShape(shape, x, y) {
+  
+  failedShapePlacements = 0; // ← نبدأ العد من جديد لو نجح في واحدة
+
+  shapesSinceLastClear++;
+if (shapesSinceLastClear >= 6) {
+  showAIReaction('embarrassed');
+  shapesSinceLastClear = 0;
+}
+
   shapesInHand = shapesInHand.filter(s => s !== currentShape);
 
   shape.forEach(([dx, dy]) => {
     gridCells[xyToIndex(x + dx, y + dy)].classList.add("filled");
   });
+shapesSinceLastClear++;
+if (shapesSinceLastClear >= 6) {
+  showAIReaction("embarrassed");
+  shapesSinceLastClear = 0;
+}
 
   score += shape.length * 10;
-  checkFullLines();
-  updateScore();
+checkFullLines();
+updateScore();
+checkNearLose();
+
+
   shapesUsed++;
 
   // الجمل التفاعلية للذكاء الاصطناعي
@@ -2091,10 +2300,6 @@ function placeShape(shape, x, y) {
   if (playerBehavior.totalMoves >= 6 && playerBehavior.perfectClears === 0 && score < 250) {
     showAIReaction("embarrassed");
   }
-if (score > 500 && playerBehavior.failedAttempts >= 4) {
-  showAIReaction('shocked');
-  playerBehavior.failedAttempts = 0;
-}
 
   shapesInHand.forEach((shape, i) => {
   
@@ -2111,6 +2316,15 @@ if (score > 500 && playerBehavior.failedAttempts >= 4) {
       return;
     }
   }
+ if (countingUselessShapes) {
+  uselessShapesInARow++;
+  if (uselessShapesInARow >= 6) {
+    showAIReaction("embarrassed");
+    uselessShapesInARow = 0;
+  }
+}
+
+
 }
     
 // ضع هذا بدلاً من gameLoop القديم
@@ -2145,10 +2359,38 @@ runGame();
       clearedCols.push(col);
     }
   }
+shapesSinceLastClear = 0; // صفينا العداد لأن تم مسح صفوف
 
   if (clearedRows.length || clearedCols.length) {
-    // أضف هذا الجزء الجديد هنا ↓
     const totalCleared = clearedRows.length + clearedCols.length;
+
+// الحالة 1: مسح 3 صفوف أو أكثر مرة واحدة
+if (totalCleared >= 3) {
+  showAIReaction("shocked");
+  smallClearsInARow = 0; // نبدأ من جديد
+}
+
+// الحالة 2: مسح صف أو صفين
+else if (totalCleared > 0 && totalCleared <= 2) {
+  smallClearsInARow++;
+  if (smallClearsInARow >= 3) {
+    showAIReaction("shocked");
+    smallClearsInARow = 0;
+  }
+} else {
+  // لو مافيش مسح صفوف في اللعبة دي
+  smallClearsInARow = 0;
+}
+
+    countingUselessShapes = true;
+uselessShapesInARow = 0;
+
+    uselessShapesInARow = 0;
+
+    shapesSinceLastClear = 0;
+
+    // أضف هذا الجزء الجديد هنا ↓
+    
     
     // تشغيل الصوت المناسب
     if (totalCleared >= 2) {
@@ -2226,6 +2468,17 @@ startResumeCountdown(); // ← هنا بالضبط
   localStorage.setItem("playerHistory", JSON.stringify(history));
  startResumeCountdown();
 
+isGameRunning = false;
+// تحديث الإحصائيات
+let lastScore = score;
+let highestScore = parseInt(localStorage.getItem("blockHighestScore") || "0");
+let playCount = parseInt(localStorage.getItem("blockPlayCount") || "0");
+
+if (score > highestScore) {
+  localStorage.setItem("blockHighestScore", score);
+}
+localStorage.setItem("blockLastScore", lastScore);
+localStorage.setItem("blockPlayCount", playCount + 1);
 
 }
 
@@ -2600,7 +2853,24 @@ document.addEventListener("pointerup", e => {
     placeShape(currentShape, gridX, gridY);
     sourceElement.remove(); // حذف الشكل من تحت
   } else {
+    
     sourceElement.style.visibility = "visible"; // رجّعه لو فشل
+    failedShapePlacements++;
+console.log("❌ فشل في وضع الشكل - المحاولة رقم", failedShapePlacements);
+
+if (failedShapePlacements >= 3) {
+  showAIReaction('angry');
+  failedShapePlacements = 0;
+}
+
+    failedShapePlacements++;
+console.log("❌ فشل في وضع الشكل - العدد:", failedShapePlacements);
+
+if (failedShapePlacements >= 3) {
+  showAIReaction('angry');
+  failedShapePlacements = 0;
+}
+
   }
 
   clearPreview();
@@ -2671,6 +2941,8 @@ document.getElementById("step2").style.display = "block";
   }
 
   applyLanguage(); // ← سطر مهم جداً لضمان ترجمة باقي الواجهة
+  switchScreen("menu"); // ← لو كنت عايز ينقله تلقائيًا للقائمة بعد اللغة
+
 }
 
 
@@ -2690,6 +2962,8 @@ setTimeout(() => {
 
 
   }
+  localStorage.setItem("firstVisitDone", "true");
+
 }, 100);
 
 }
@@ -2755,10 +3029,20 @@ document.getElementById("avatarIntroScreen").classList.remove("hidden");
   startBtn.innerText = lang === "ar" ? "🎮 يلا نبدأ الرحلة!" : "🎮 Let's Start!";
   startBtn.className = "welcome-btn";
   startBtn.style.marginTop = "25px";
-  startBtn.onclick = () => {
-    document.getElementById("avatarIntroScreen").classList.add("hidden");
-    switchScreen("menu");
-  };
+startBtn.onclick = () => {
+  let data = JSON.parse(localStorage.getItem("blockPlayerData")) || {};
+  data.introDone = true;
+  localStorage.setItem("blockPlayerData", JSON.stringify(data));
+
+  // أخفي كل الشاشات التمهيدية
+  document.getElementById("welcomeScreen").classList.add("hidden");
+  document.getElementById("avatarIntroScreen").classList.add("hidden");
+
+  // افتح القائمة الرئيسية
+  switchScreen("menu");
+  applyLanguage();
+};
+
 
   document.getElementById("avatarWrapper").appendChild(startBtn);
 }, 2000);
@@ -2801,21 +3085,37 @@ startAvatarIntroduction();
       let highestScore = localStorage.getItem("blockHighestScore") || 0;
       let lastScore = localStorage.getItem("blockLastScore") || 0;
       let playCount = localStorage.getItem("blockPlayCount") || 0;
+      let aiEnabled = localStorage.getItem("aiModeEnabled") !== "false";
 
-      let statsHTML = `
-        ${t.genderLabel}: ${savedData.gender === 'male' ? (lang === 'ar' ? 'ولد' : 'Boy') : (lang === 'ar' ? 'بنت' : 'Girl')} 
-        <button class="btn" style="padding:5px 10px; font-size:0.9rem;" onclick="changeGender()">${t.change}</button><br>
 
-       
+let soundEnabled = localStorage.getItem("soundEnabled") !== "false";
 
-        ${t.langLabel}: ${lang === 'ar' ? 'العربية' : 'English'}
-        <button class="btn" style="padding:5px 10px; font-size:0.9rem;" onclick="changeLanguage()">${t.change}</button><br>
+let statsHTML = `
+  <div class="row">${t.genderLabel}: ${savedData.gender === 'male' ? (lang === 'ar' ? 'ولد' : 'Boy') : (lang === 'ar' ? 'بنت' : 'Girl')}
+    <button onclick="changeGender()">${t.change}</button>
+  </div>
+  <div class="row">${t.langLabel}: ${lang === 'ar' ? 'العربية' : 'English'}
+    <button onclick="changeLanguage()">${t.change}</button>
+  </div>
+  <div class="row">${t.highScore}: ${highestScore}</div>
+  <div class="row">${t.lastScore}: ${lastScore}</div>
+  <div class="row">${t.playCount}: ${playCount}</div>
+  <hr style="width:100%;margin:10px 0;">
+  <div class="row">${t.aiMessage}:
+    <button id="aiModeToggleBtn" onclick="toggleAIMode()">
+      ${aiEnabled ? t.aiStatusOn : t.aiStatusOff}
+    </button>
+  </div>
+  <div class="row">${t.soundLabel}:
+    <button id="soundToggleBtn" onclick="toggleSoundSetting()">
+      ${soundEnabled ? t.soundOn : t.soundOff}
+    </button>
+  </div>
+  <div style="margin-top: 10px; color: #4CAF50;">${gameTranslations[lang].levelMessage}</div>
+`;
 
-        ${t.highScore}: ${highestScore}<br>
-        ${t.lastScore}: ${lastScore}<br>
-        ${t.playCount}: ${playCount}<br>
-        ${gameTranslations[lang].levelMessage}
-      `;
+
+
 
       document.getElementById("statsContent").innerHTML = statsHTML;
       document.getElementById("playerStats").style.display = "flex";
@@ -2828,6 +3128,37 @@ startAvatarIntroduction();
   reloadAIResponses(); // 👈 تضيف دي
   showPlayerStats();
 }
+
+
+
+function toggleAIMode() {
+  const current = localStorage.getItem("aiModeEnabled");
+  const newValue = current === "false" ? "true" : "false";
+  localStorage.setItem("aiModeEnabled", newValue);
+
+  // تحديث الزر بصريًا
+  const btn = document.getElementById("aiModeToggleBtn");
+  if (btn) {
+    const t = applyLanguageText(playerData.language || "ar");
+btn.textContent = newValue === "true" ? t.aiStatusOn : t.aiStatusOff;
+
+  }
+}
+
+function toggleSoundSetting() {
+  const current = localStorage.getItem("soundEnabled");
+  const newValue = current === "false" ? "true" : "false";
+  localStorage.setItem("soundEnabled", newValue);
+  isSoundOn = newValue === "true";
+
+  const t = applyLanguageText(playerData.language || "ar");
+  const btn = document.getElementById("soundToggleBtn");
+  if (btn) {
+    btn.textContent = isSoundOn ? t.soundOn : t.soundOff;
+  }
+}
+
+
 
 
 
@@ -2921,6 +3252,14 @@ function closeInsight() {
 
     function applyLanguageText(lang) {
       return {
+        vibrationLabel: lang === 'ar' ? "📳 الاهتزاز" : "📳 Vibration",
+vibrationOn: lang === 'ar' ? "✅ مفعل" : "✅ On",
+vibrationOff: lang === 'ar' ? "🚫 غير مفعل" : "🚫 Off",
+
+        soundLabel: lang === 'ar' ? "🔊 الصوت" : "🔊 Sound",
+soundOn: lang === 'ar' ? "✅ شغال" : "✅ On",
+soundOff: lang === 'ar' ? "🚫 مغلق" : "🚫 Off",
+
         genderLabel: lang === 'ar' ? "👤 النوع" : "👤 Gender",
         ageLabel: lang === 'ar' ? "🎂 السن" : "🎂 Age",
         langLabel: lang === 'ar' ? "🌍 اللغة" : "🌍 Language",
@@ -2928,6 +3267,9 @@ function closeInsight() {
         lastScore: lang === 'ar' ? "🎯 آخر نتيجة" : "🎯 Last Score",
         playCount: lang === 'ar' ? "🔥 مرات اللعب" : "🔥 Play Count",
         aiMessage: lang === 'ar' ? "💡 المساعد الذكي" : "💡 Smart Assistant",
+aiStatusOn: lang === 'ar' ? "✅ مفعل" : "✅ Enabled",
+aiStatusOff: lang === 'ar' ? "🚫 غير مفعل" : "🚫 Disabled",
+
         change: lang === 'ar' ? "تغيير" : "Change"
       };
     }
@@ -2950,10 +3292,29 @@ function closeInsight() {
     );
     resetIdleTimer();
 
-    function backToMenu() {
-      
-      switchScreen("menu");
-    }
+   function backToMenu() {
+  isGameRunning = false;
+
+  // ⛔ أوقف صوت البابل إن وُجد
+  if (SoundManager?.sounds?.bubbleAppear) {
+    SoundManager.sounds.bubbleAppear.pause();
+    SoundManager.sounds.bubbleAppear.currentTime = 0;
+  }
+
+  // ⛔ أخفِ الفقاعة
+  document.getElementById("aiBubble")?.classList.add("hidden");
+  document.getElementById("aiBubble")?.classList.remove("show", "hide");
+  document.getElementById("aiBoard")?.classList.add("hidden");
+  document.getElementById("aiBoard")?.classList.remove("show", "hide");
+  document.getElementById("aiText")?.classList.remove("show");
+
+  // ⛔ امسح أي رسائل معلقة
+  messageQueue = [];
+  isShowingMessage = false;
+
+  // ✅ ارجع للقائمة
+  switchScreen("menu");
+}
 
 
 let countdownTimer;
@@ -2993,17 +3354,34 @@ function startResumeCountdown() {
 }
 
 
-function showReactionMessage(message) {
- const isGameActive = document.getElementById("game").classList.contains("active");
-const isIntroActive = document.getElementById("avatarIntroScreen").classList.contains("active");
-if (!(isGameActive || isIntroActive) || document.hidden) {
 
-  isShowingMessage = false;
-  return;
+function showReactionMessage(message) {
+  const aiEnabled = localStorage.getItem("aiModeEnabled") !== "false";
+if (!aiEnabled) return;
+
+  const isGameActive = document.getElementById("game").classList.contains("active");
+  const isIntroActive = document.getElementById("avatarIntroScreen").classList.contains("active");
+
+  // 👇 لو الشاشة مش نشطة حاليًا، استنى شوية وجرب تاني
+  if (!(isGameActive || isIntroActive)) {
+    setTimeout(() => {
+      showReactionMessage(message);
+    }, 200);
+    return;
+  }
+
+  if (document.hidden) {
+    isShowingMessage = false;
+    return;
+  }
+
+
+
+
+  if (isGameRunning) {
+  SoundManager.play('bubbleAppear');
 }
 
-
-  SoundManager.play('bubbleAppear');
   const aiBubble = document.getElementById("aiBubble");
   const aiBoard = document.getElementById("aiBoard");
   const aiText = document.getElementById("aiText");
@@ -3344,5 +3722,61 @@ document.body.addEventListener("touchend", (e) => {
 
   </script>
   
+
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      for (let reg of registrations) {
+        reg.update(); // تحدث تلقائيًا
+      }
+    });
+  }
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      for (let reg of registrations) {
+        reg.unregister().then(() => {
+          console.log("🧹 Service Worker تم حذفه بالكامل");
+          localStorage.clear(); // امسح التخزين المؤقت كمان لو حبيت
+          location.reload(true); // تحديث فوري للنسخة الجديدة
+        });
+      }
+    });
+  }
+</script>
+
+<script>
+  if (!localStorage.getItem("swForceUpdate")) {
+    localStorage.setItem("swForceUpdate", "true");
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        for (let reg of regs) {
+          reg.unregister().then(() => {
+            console.log("🧹 Service Worker تم حذفه");
+            caches.keys().then(function(names) {
+              for (let name of names) caches.delete(name); // حذف الكاشات
+            });
+            location.reload(true);
+          });
+        }
+      });
+    }
+  }
+</script>
+
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(reg => console.log('✅ Service Worker registered:', reg))
+        .catch(err => console.error('❌ SW registration failed:', err));
+    });
+  }
+</script>
+
+
 </body>
 </html>
