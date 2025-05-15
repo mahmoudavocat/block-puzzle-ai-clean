@@ -1113,28 +1113,29 @@ script.src = `ai_responses/aiResponses_${playerType}.js`;
   await new Promise((res) => setTimeout(res, 300));
 }
 
-
-// دالة لتحديد الوجهة بعد التحميل
 function goToNextScreen() {
-  const data = localStorage.getItem("blockPlayerData");
+  const raw = localStorage.getItem("blockPlayerData");
+  if (!raw) {
+    console.warn("🧩 أول زيارة - عرض شاشة اللغة والجنس");
+    localStorage.setItem("firstVisitDone", "true");
+    document.getElementById("welcomeScreen").style.display = "flex";
+    return;
+  }
 
-  if (!data) {
-    // لو أول مرة، يظهر شاشة اختيار اللغة والجنس
-    const welcome = document.getElementById("welcomeScreen");
-welcome.classList.remove("hidden");
-welcome.style.display = "flex";
+  try {
+    const data = JSON.parse(raw);
+    if (!data.language || !data.gender || !data.introDone) {
+      console.warn("⚠️ بيانات غير مكتملة - لكن مش هنمسحها");
+      document.getElementById("welcomeScreen").style.display = "flex";
+      return;
+    }
 
-  } else {
-    // يفتح القائمة الرئيسية فقط، بدون بدء اللعبة
-    const menu = document.getElementById("mainMenu");
-if (menu) {
-  menu.style.display = "block";
-} else {
-  console.warn("⚠️ عنصر mainMenu مش موجود في الصفحة!");
-}
-
-
-   
+    // ✅ بيانات كاملة
+    console.log("✅ دخول مباشر للقائمة");
+    document.getElementById("mainMenu").style.display = "block";
+  } catch (e) {
+    console.error("❌ فشل في قراءة localStorage:", e);
+    document.getElementById("welcomeScreen").style.display = "flex";
   }
 }
 
