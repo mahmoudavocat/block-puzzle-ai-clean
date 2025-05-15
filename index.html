@@ -39,7 +39,7 @@
     }
   
     window.addEventListener('load', function () {
-      enterFullscreen(); // تأكد من أن الوظيفة تُنفذ عند تحميل الصفحة
+      
     });
   </script>
   
@@ -1166,13 +1166,16 @@ if ('connection' in navigator) {
 
 /*** ابدأ إضافة هذا الكود ***/
 // تحسين تحميل الصور (إذا وجدت)
-const images = document.querySelectorAll('img');
-if (images.length > 0) {
-  images.forEach(img => {
-    img.loading = 'eager';
-    img.decoding = 'async';
-  });
-}
+document.addEventListener('DOMContentLoaded', () => {
+  const images = document.querySelectorAll('img');
+  if (images.length > 0) {
+    images.forEach(img => {
+      img.loading = 'eager';
+      img.decoding = 'async';
+    });
+  }
+});
+
 /*** انتهى الكود المضاف ***/
 
 // بعد تحميل العناصر
@@ -3725,6 +3728,13 @@ document.body.addEventListener("touchend", (e) => {
   }, 2000);
 });
 
+["click", "touchstart"].forEach(evt => {
+  window.addEventListener(evt, () => {
+    if (document.fullscreenElement == null) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+  }, { once: true });
+});
 
 
   </script>
