@@ -924,12 +924,19 @@
 
 #finalScoreDisplay.show {
   font-size: 4rem;
-  font-weight: 800;
-  color: #ffffff;
-  text-shadow: 2px 2px 0 #000, 4px 4px 12px #ffcc00;
-  animation: explode-scale 0.7s ease-out;
+  font-weight: 700;
+  color: #4b52bb
+; /* أزرق ملكي */
+  font-family: 'Rubik', sans-serif;
+
+  text-align: center;
+  margin-top: 20px;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6); /* ظل خفيف للتوضيح */
+  animation: explode-scale 0.5s ease-out;
   opacity: 1;
 }
+
+
 
 
 
@@ -1607,7 +1614,8 @@ function showAIReaction(eventType) {
     const aiEnabled = localStorage.getItem("aiModeEnabled") !== "false";
   if (!aiEnabled) return;
 
-  if (!isGameRunning) return;
+  if (!isGameRunning && eventType !== "combo") return;
+
 
   if (eventType === 'lateOpen') {
     showSingleAIReaction(eventType);
@@ -2563,6 +2571,8 @@ function triggerFireworks(container) {
 
 
 function resumeGame() {
+  isGameRunning = true;
+
   // هذا مكان وضع كود AdMob الحقيقي لاحقاً
   // المثال التالي جاهز لاستبداله بـ AdMob Rewarded Ad
   
@@ -2640,6 +2650,11 @@ for (let row = 0; row < 8; row++) {
 
 // دالة مساعدة لعرض الإعلان (ستحتاج لربطها بAdMob لاحقاً)
 function showRewardedAdWithCallback(callback) {
+  isGameRunning = true;
+  lastActivityTime = Date.now();
+startGameOverWatcher();
+
+
   // جاهزة لدمج AdMob مباشرة
   callback(); // احذف هذا السطر عند دمج AdMob
   
@@ -2661,6 +2676,7 @@ function showRewardedAdWithCallback(callback) {
     }
   });
   */
+ 
 }
 
 
