@@ -39,6 +39,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <style>
 
+
+
+
+#aiModeToggleBtn,
+#soundToggleBtn {
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: linear-gradient(45deg, #2196F3, #21CBF3);
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(33, 150, 243, 0.4);
+}
+
+#aiModeToggleBtn:hover,
+#soundToggleBtn:hover {
+  background: linear-gradient(45deg, #00C853, #00E676);
+  box-shadow: 0 0 14px rgba(0, 230, 118, 0.5);
+}
+
 .enhanced-welcome {
   background: linear-gradient(145deg, #f9f9f9, #ffffff);
   border-radius: 25px;
@@ -880,37 +903,9 @@
   box-shadow: 0 6px 18px rgba(0,0,0,0.2);
 }
 
-.sound-btn {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 48px;
-  height: 48px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 2px solid #2196F3;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  transition: all 0.3s ease;
-}
 
-.sound-btn:hover {
-  background: #2196F3;
-  transform: scale(1.1);
-}
 
-.sound-btn:hover svg {
-  stroke: white;
-  fill: white;
-}
 
-.sound-btn svg {
-  transition: all 0.3s ease;
-}
 
 
 .welcome-card {
@@ -1268,12 +1263,7 @@ const Pan = new Hammer.Pan({ threshold: 5 });
       <h1 class="game-title">Block Puzzle AI</h1>
       <button class="btn start-btn" onclick="startGame()">ابدأ رحلتي</button>
       <button class="btn stats-btn" onclick="showPlayerStats()">📈 بياناتي</button>
-     <button id="soundToggleBtn" class="sound-btn" onclick="toggleSound()">
-  <svg viewBox="0 0 24 24" width="24" height="24">
-    <path id="soundIcon" fill="#2196F3"
-      d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
-  </svg>
-</button>
+   
 
       <p class="copyright">By: NovaCode Studio © 2025</p>
   
@@ -1527,6 +1517,9 @@ const eventPriority = {
 };
 
 function showAIReaction(eventType) {
+    const aiEnabled = localStorage.getItem("aiModeEnabled") !== "false";
+  if (!aiEnabled) return;
+
   if (!isGameRunning) return;
 
   if (eventType === 'lateOpen') {
@@ -1601,7 +1594,11 @@ if (!message) {
 
 if (isGameRunning) {
   SoundManager.play("bubbleAppear");
+  if (localStorage.getItem("vibrationEnabled") !== "false") {
+    navigator.vibrate(20); // اهتزاز بسيط جدًا
+  }
 }
+
 
 
 
@@ -2397,6 +2394,10 @@ uselessShapesInARow = 0;
       SoundManager.play('singleClear');
     }
 
+    if (isGameRunning && localStorage.getItem("vibrationEnabled") !== "false") {
+  navigator.vibrate(80); // متوسط
+}
+
     // باقي الكود يبقى كما هو ↓
     clearedRows.forEach(row => {
       for (let col = 0; col < 8; col++) gridCells[xyToIndex(col, row)].classList.remove("filled");
@@ -2471,6 +2472,9 @@ isGameRunning = false;
 let lastScore = score;
 let highestScore = parseInt(localStorage.getItem("blockHighestScore") || "0");
 let playCount = parseInt(localStorage.getItem("blockPlayCount") || "0");
+if (localStorage.getItem("vibrationEnabled") !== "false") {
+  navigator.vibrate([50, 50, 50]);
+}
 
 if (score > highestScore) {
   localStorage.setItem("blockHighestScore", score);
@@ -3075,18 +3079,36 @@ startAvatarIntroduction();
       let highestScore = localStorage.getItem("blockHighestScore") || 0;
       let lastScore = localStorage.getItem("blockLastScore") || 0;
       let playCount = localStorage.getItem("blockPlayCount") || 0;
+   
+
+
+
+let aiEnabled = localStorage.getItem("aiModeEnabled") !== "false";
+let soundEnabled = localStorage.getItem("soundEnabled") !== "false";
+let vibrationEnabled = localStorage.getItem("vibrationEnabled") !== "false";
+
 let statsHTML = `
-  <div class="row">${t.genderLabel}: ${savedData.gender === 'male' ? (lang === 'ar' ? 'ولد' : 'Boy') : (lang === 'ar' ? 'بنت' : 'Girl')}
-    <button onclick="changeGender()">${t.change}</button>
+  ...
+  <div class="row">${t.aiMessage}:
+    <button id="aiModeToggleBtn" onclick="toggleAIMode()">
+      ${aiEnabled ? t.aiStatusOn : t.aiStatusOff}
+    </button>
   </div>
-  <div class="row">${t.langLabel}: ${lang === 'ar' ? 'العربية' : 'English'}
-    <button onclick="changeLanguage()">${t.change}</button>
+
+  <div class="row">${t.soundLabel}:
+    <button id="soundToggleBtn" onclick="toggleSoundSetting()">
+      ${soundEnabled ? t.soundOn : t.soundOff}
+    </button>
   </div>
-  <div class="row">${t.highScore}: ${highestScore}</div>
-  <div class="row">${t.lastScore}: ${lastScore}</div>
-  <div class="row">${t.playCount}: ${playCount}</div>
-  <div style="margin-top: 10px; color: #4CAF50;">${gameTranslations[lang].levelMessage}</div>
+
+  <div class="row">${t.vibrationLabel}:
+    <button id="vibrationToggleBtn" onclick="toggleVibrationSetting()">
+      ${vibrationEnabled ? t.vibrationOn : t.vibrationOff}
+    </button>
+  </div>
+  ...
 `;
+
 
 
       document.getElementById("statsContent").innerHTML = statsHTML;
@@ -3100,6 +3122,52 @@ let statsHTML = `
   reloadAIResponses(); // 👈 تضيف دي
   showPlayerStats();
 }
+
+
+
+function toggleAIMode() {
+  const current = localStorage.getItem("aiModeEnabled");
+  const newValue = current === "false" ? "true" : "false";
+  localStorage.setItem("aiModeEnabled", newValue);
+
+  // تحديث الزر بصريًا
+  const btn = document.getElementById("aiModeToggleBtn");
+  if (btn) {
+    const t = applyLanguageText(playerData.language || "ar");
+btn.textContent = newValue === "true" ? t.aiStatusOn : t.aiStatusOff;
+
+  }
+}
+
+function toggleSoundSetting() {
+  const current = localStorage.getItem("soundEnabled");
+  const newValue = current === "false" ? "true" : "false";
+  localStorage.setItem("soundEnabled", newValue);
+  isSoundOn = newValue === "true";
+
+  const t = applyLanguageText(playerData.language || "ar");
+  const btn = document.getElementById("soundToggleBtn");
+  if (btn) {
+    btn.textContent = isSoundOn ? t.soundOn : t.soundOff;
+  }
+}
+
+
+
+
+function toggleVibrationSetting() {
+  const current = localStorage.getItem("vibrationEnabled");
+  const newValue = current === "false" ? "true" : "false";
+  localStorage.setItem("vibrationEnabled", newValue);
+
+  const t = applyLanguageText(playerData.language || "ar");
+  const btn = document.getElementById("vibrationToggleBtn");
+  if (btn) {
+    btn.textContent = newValue === "true" ? t.vibrationOn : t.vibrationOff;
+  }
+}
+
+
 
 
 
@@ -3193,6 +3261,14 @@ function closeInsight() {
 
     function applyLanguageText(lang) {
       return {
+        vibrationLabel: lang === 'ar' ? "📳 الاهتزاز" : "📳 Vibration",
+vibrationOn: lang === 'ar' ? "✅ مفعل" : "✅ On",
+vibrationOff: lang === 'ar' ? "🚫 غير مفعل" : "🚫 Off",
+
+        soundLabel: lang === 'ar' ? "🔊 الصوت" : "🔊 Sound",
+soundOn: lang === 'ar' ? "✅ شغال" : "✅ On",
+soundOff: lang === 'ar' ? "🚫 مغلق" : "🚫 Off",
+
         genderLabel: lang === 'ar' ? "👤 النوع" : "👤 Gender",
         ageLabel: lang === 'ar' ? "🎂 السن" : "🎂 Age",
         langLabel: lang === 'ar' ? "🌍 اللغة" : "🌍 Language",
@@ -3200,6 +3276,9 @@ function closeInsight() {
         lastScore: lang === 'ar' ? "🎯 آخر نتيجة" : "🎯 Last Score",
         playCount: lang === 'ar' ? "🔥 مرات اللعب" : "🔥 Play Count",
         aiMessage: lang === 'ar' ? "💡 المساعد الذكي" : "💡 Smart Assistant",
+aiStatusOn: lang === 'ar' ? "✅ مفعل" : "✅ Enabled",
+aiStatusOff: lang === 'ar' ? "🚫 غير مفعل" : "🚫 Disabled",
+
         change: lang === 'ar' ? "تغيير" : "Change"
       };
     }
@@ -3286,6 +3365,9 @@ function startResumeCountdown() {
 
 
 function showReactionMessage(message) {
+  const aiEnabled = localStorage.getItem("aiModeEnabled") !== "false";
+if (!aiEnabled) return;
+
   const isGameActive = document.getElementById("game").classList.contains("active");
   const isIntroActive = document.getElementById("avatarIntroScreen").classList.contains("active");
 
