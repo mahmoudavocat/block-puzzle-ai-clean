@@ -3733,38 +3733,8 @@ document.body.addEventListener("touchend", (e) => {
   }
 </script>
 
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(registrations => {
-      for (let reg of registrations) {
-        reg.unregister().then(() => {
-          console.log("🧹 Service Worker تم حذفه بالكامل");
-          localStorage.clear(); // امسح التخزين المؤقت كمان لو حبيت
-          location.reload(true); // تحديث فوري للنسخة الجديدة
-        });
-      }
-    });
-  }
-</script>
 
-<script>
-  if (!localStorage.getItem("swForceUpdate")) {
-    localStorage.setItem("swForceUpdate", "true");
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(regs => {
-        for (let reg of regs) {
-          reg.unregister().then(() => {
-            console.log("🧹 Service Worker تم حذفه");
-            caches.keys().then(function(names) {
-              for (let name of names) caches.delete(name); // حذف الكاشات
-            });
-            location.reload(true);
-          });
-        }
-      });
-    }
-  }
-</script>
+
 
 
 <script>
