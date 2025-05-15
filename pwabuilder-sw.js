@@ -1,32 +1,42 @@
-const CACHE = "pwabuilder-offline";
+const CACHE = "block-puzzle-cache-v1";
 
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/5.1.2/workbox-sw.js');
 
-self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
+// ✅ أهم نقطة: لا تستخدم skipWaiting بدون تنسيق
+// ❌ self.skipWaiting() ← هذه هي سبب ال reload loop
+self.addEventListener("install", () => {
+  console.log("📦 Service Worker Installed");
 });
 
-// 🟢 تخزين كل شيء عادي ما عدا HTML (index.html)
-workbox.routing.registerRoute(
-  ({ request }) => request.destination !== 'document',
-  new workbox.strategies.StaleWhileRevalidate({
-    cacheName: CACHE
-  })
-);
+self.addEventListener("activate", event => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.map(key => {
+        if (key !== CACHE) return caches.delete(key);
+      }))
+    )
+  );
+  console.log("🧹 Service Worker Activated and Old Caches Cleared");
+});
 
-// 🔥 لازم نجيب index.html من الشبكة مباشرة دايمًا
 workbox.routing.registerRoute(
   ({ request }) => request.mode === 'navigate',
   new workbox.strategies.NetworkFirst({
-    cacheName: 'html-cache',
-    networkTimeoutSeconds: 3,
+    cacheName: CACHE,
     plugins: [
       new workbox.expiration.ExpirationPlugin({
-        maxEntries: 5,
-        purgeOnQuotaError: true,
-      }),
-    ],
+        maxEntries: 10,
+        purgeOnQuotaError: true
+      })
+    ]
+  })
+);
+
+// ✅ باقي الملفات (صور، CSS، JS)
+workbox.routing.registerRoute(
+  ({ request }) =>
+    ['style', 'script', 'worker', 'image'].includes(request.destination),
+  new workbox.strategies.StaleWhileRevalidate({
+    cacheName: 'block-puzzle-static-v1'
   })
 );
