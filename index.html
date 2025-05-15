@@ -886,6 +886,84 @@
   box-shadow: 0 0 25px rgba(255, 215, 0, 0.8);
 }
 
+
+
+
+
+.score-burst {
+  font-size: 4rem;
+  font-weight: bold;
+  color: #FFD700;
+  text-shadow: 0 0 20px #FFEB3B, 0 0 40px orange;
+  animation: explode 0.6s ease-out;
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes explode {
+  0% { transform: scale(0.2); opacity: 0; }
+  60% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+.sparkle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff, #ff0, #f00);
+  animation: sparkle-move 0.7s ease-out forwards;
+  opacity: 0.8;
+  z-index: 1;
+}
+
+@keyframes sparkle-move {
+  0% { transform: scale(0.5) translate(0, 0); opacity: 1; }
+  100% {
+    transform: scale(1.5)
+      translate(calc(-50px + 100px * var(--x)),
+                calc(-50px + 100px * var(--y)));
+    opacity: 0;
+  }
+}
+
+
+
+#finalScoreDisplay.show {
+  font-size: 3.5rem;
+  color: #6b19cf; /* أزرق كهربائي */
+
+  position: relative;
+  animation: explode-scale 0.6s ease-out;
+  background: linear-gradient(to right, #000000, #000000);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+
+.score-particle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: gold;
+  border-radius: 50%;
+  animation: pop 1.2s ease-out forwards;
+  opacity: 0.9;
+}
+
+@keyframes pop {
+  to {
+    transform: translate(var(--x), var(--y)) scale(0);
+    opacity: 0;
+  }
+}
+
+
+
+
+
+
+
 @keyframes goldenPulse {
   0% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.6); }
   100% { box-shadow: 0 0 20px rgba(255, 215, 0, 1); }
@@ -2422,34 +2500,33 @@ uselessShapesInARow = 0;
   }
 }
 
+
 function showGameOver() {
-  
-  if (screens.gameover.classList.contains("active")) return; // عشان ميتنفذش مرتين
+  if (screens.gameover.classList.contains("active")) return;
 
- clearInterval(gameOverCheckInterval);
-
+  clearInterval(gameOverCheckInterval);
   playerBehavior.nearFails++;
 
   switchScreen("gameover");
-  // إظهار زر استئناف اللعب فقط
-document.getElementById("resumeBtn").style.display = "inline-block";
-document.getElementById("restartBtn").style.display = "none";
-document.getElementById("insightBtn").style.display = "none";
 
-  
+  // ✅ إظهار الزر الذهبي
+  document.getElementById("resumeBtn").style.display = "inline-block";
+  document.getElementById("restartBtn").style.display = "none";
+  document.getElementById("insightBtn").style.display = "none";
 
+  // ✅ عرض السكور بشكل متفجر
+  const finalDisplay = document.getElementById("finalScoreDisplay");
+  finalDisplay.innerHTML = `<div class="score-burst">${score}</div>`;
+  finalDisplay.classList.add("show");
 
-  finalScoreDisplay.classList.remove("show", "bounce-in");
-  resumeBtn.style.display = "inline-block";
-  resumeBtn.classList.add("golden-btn");
-  restartBtn.style.display = "none";
+  // ✅ تفجير مفرقعات حول الرقم
+  triggerFireworks(finalDisplay);
+
+  // ✅ عداد الاستئناف
   countdownEl.style.display = "block";
+  startResumeCountdown();
 
- 
-
-startResumeCountdown(); // ← هنا بالضبط
-
-
+  // ✅ حفظ الأداء
   const history = JSON.parse(localStorage.getItem("playerHistory") || "[]");
   history.push({
     score,
@@ -2466,20 +2543,20 @@ startResumeCountdown(); // ← هنا بالضبط
   });
   if (history.length > 10) history.shift();
   localStorage.setItem("playerHistory", JSON.stringify(history));
- startResumeCountdown();
 
-isGameRunning = false;
-// تحديث الإحصائيات
-let lastScore = score;
-let highestScore = parseInt(localStorage.getItem("blockHighestScore") || "0");
-let playCount = parseInt(localStorage.getItem("blockPlayCount") || "0");
-
-if (score > highestScore) {
-  localStorage.setItem("blockHighestScore", score);
+  isGameRunning = false;
 }
-localStorage.setItem("blockLastScore", lastScore);
-localStorage.setItem("blockPlayCount", playCount + 1);
 
+
+function triggerFireworks(container) {
+  for (let i = 0; i < 12; i++) {
+    const sparkle = document.createElement("div");
+    sparkle.className = "sparkle";
+    sparkle.style.left = `${50 + Math.random() * 100 - 50}%`;
+    sparkle.style.top = `${50 + Math.random() * 100 - 50}%`;
+    container.appendChild(sparkle);
+    setTimeout(() => sparkle.remove(), 1000);
+  }
 }
 
 
@@ -3317,6 +3394,7 @@ aiStatusOff: lang === 'ar' ? "🚫 غير مفعل" : "🚫 Disabled",
 }
 
 
+
 let countdownTimer;
 function startResumeCountdown() {
   const countdownEl = document.getElementById("countdown");
@@ -3325,24 +3403,27 @@ function startResumeCountdown() {
   const restartBtn = document.getElementById("restartBtn");
   const insightBtn = document.getElementById("insightBtn");
   const resumeBtn = document.getElementById("resumeBtn");
+  const finalScoreDisplay = document.getElementById("finalScoreDisplay");
 
   let seconds = 5;
 
-  // إعداد مبدئي
+  // إخفاء العناصر قبل البدء
   countdownEl.style.display = "block";
   countdownBarContainer.style.display = "block";
   countdownBar.style.animation = "countdownShrink 5s linear forwards";
-  countdownEl.textContent = `أو انتظر ${seconds} ثواني...`;
+  countdownEl.textContent = `أو انتظر ${seconds} ثواني.`;
+  finalScoreDisplay.style.display = "none";
+  finalScoreDisplay.classList.remove("show", "bounce-in");
 
-  // عد تنازلي بالنص فقط
+  // عد تنازلي
   countdownTimer = setInterval(() => {
     seconds--;
     if (seconds > 0) {
-      countdownEl.textContent = `أو انتظر ${seconds} ثواني...`;
+      countdownEl.textContent = `أو انتظر ${seconds} ثواني.`;
     }
   }, 1000);
 
-  // بعد 5 ثواني بالضبط - نكمل التحول
+  // بعد 5 ثواني - إظهار زر التقرير والريستارت + السكور مع مؤثرات
   setTimeout(() => {
     clearInterval(countdownTimer);
     countdownEl.style.display = "none";
@@ -3350,8 +3431,27 @@ function startResumeCountdown() {
     resumeBtn.style.display = "none";
     restartBtn.style.display = "inline-block";
     insightBtn.style.display = "inline-block";
+
+    // ✨ إظهار السكور بمؤثر انفجار ومفرقعات
+    finalScoreDisplay.style.display = "block";
+    finalScoreDisplay.classList.add("show", "bounce-in");
+
+    // 💥 مفرقعات حول السكور
+    for (let i = 0; i < 15; i++) {
+      const particle = document.createElement("div");
+      particle.className = "score-particle";
+      particle.style.left = `${50 + Math.random() * 10 - 5}%`;
+      particle.style.top = `${50 + Math.random() * 10 - 5}%`;
+      particle.style.setProperty('--x', `${Math.random() * 200 - 100}px`);
+      particle.style.setProperty('--y', `${Math.random() * 200 - 100}px`);
+      finalScoreDisplay.appendChild(particle);
+
+      setTimeout(() => particle.remove(), 1500);
+    }
+
   }, 5000);
 }
+
 
 
 
