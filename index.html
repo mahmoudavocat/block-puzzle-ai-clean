@@ -1023,10 +1023,7 @@ if (firstVisitDone === "true") {
 });
 
 async function preloadEverything() {
-  img.onerror = () => {
-  console.warn("⚠️ فشل تحميل صورة:", src);
-  resolve(); // ← مهم عشان يكمل
-};
+  
 
   await SoundManager.loadSounds();
 
