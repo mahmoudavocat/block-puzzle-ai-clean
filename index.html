@@ -972,6 +972,13 @@ body {
 <meta name="apple-mobile-web-app-capable" content="yes">
 <script>
 window.addEventListener("DOMContentLoaded", async () => {
+  // تسجيل Service Worker بسرعة قبل أي تحميل
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js')
+    .then(reg => console.log('✅ Service Worker registered:', reg))
+    .catch(err => console.error('❌ SW registration failed:', err));
+}
+
 
   // ✅ تفعيل الصوت من أول لمسة
  ["touchstart", "click", "pointerdown"].forEach(evt => {
@@ -1030,6 +1037,11 @@ if (firstVisitDone === "true") {
 });
 
 async function preloadEverything() {
+  img.onerror = () => {
+  console.warn("⚠️ فشل تحميل صورة:", src);
+  resolve(); // ← مهم عشان يكمل
+};
+
   await SoundManager.loadSounds();
 
   const imagePaths = [
@@ -3714,16 +3726,14 @@ document.body.addEventListener("touchend", (e) => {
 
   </script>
   
-
-  <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(registrations => {
-      for (let reg of registrations) {
-        reg.update(); // تحدث تلقائيًا
-      }
-    });
-  }
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js')
+    .then(reg => console.log('✅ Service Worker registered', reg))
+    .catch(err => console.error('❌ SW registration failed:', err));
+}
 </script>
+
 
 <script>
   if ('serviceWorker' in navigator) {
