@@ -1,0 +1,16 @@
+{
+  "name": "Block Puzzle AI",
+  "theme_color": "#1c0b2b",
+  "background_color": "#1c0b2b",
+  "short_name": "PuzzleAI",
+  "id": "/",
+  "description": "لعبة ذكاء وتحدي بنظام ذكاء اصطناعي يتفاعل معك صوتيًا!",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "window-controls-overlay"
+  ],
+  "categories": [
+    "games"
+  ]
+}
