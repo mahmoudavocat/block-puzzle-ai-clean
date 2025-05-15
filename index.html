@@ -991,6 +991,18 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   // ✅ تحميل فعلي وانتظار
   const splash = document.getElementById("splashScreen");
+  let playerData = {};
+try {
+  playerData = JSON.parse(localStorage.getItem("blockPlayerData")) || {};
+  if (typeof playerData.language !== 'string' || typeof playerData.gender !== 'string') {
+    throw new Error("بيانات غير صالحة");
+  }
+} catch (e) {
+  console.warn("🚨 بيانات مش مظبوطة من localStorage - هنبدأ من جديد");
+  localStorage.removeItem("blockPlayerData");
+  playerData = { language: '', gender: '' };
+}
+
 
   const MIN_DISPLAY = 2200;
   const MAX_WAIT = 7000;
@@ -1008,8 +1020,18 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   splash.classList.add("fade-out");
   setTimeout(() => {
-    splash.style.display = "none";
-    goToNextScreen();
+   splash.style.display = "none";
+
+if (!playerData.language || !playerData.gender) {
+  document.getElementById("welcomeScreen").style.display = "block";
+} else {
+  switchScreen("menu");
+  setTimeout(() => {
+    showAIReaction('lateOpen');
+  }, 1000);
+}
+
+    
    const firstVisitDone = localStorage.getItem("firstVisitDone");
 if (firstVisitDone === "true") {
   setTimeout(() => {
