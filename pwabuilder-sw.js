@@ -8,10 +8,25 @@ self.addEventListener("message", (event) => {
   }
 });
 
-// ✅ نخزّن فقط الـ HTML للتنقلات، مش API ولا ملفات JS/CSS
+// 🟢 تخزين كل شيء عادي ما عدا HTML (index.html)
 workbox.routing.registerRoute(
-  ({ request }) => request.mode === 'navigate',
+  ({ request }) => request.destination !== 'document',
   new workbox.strategies.StaleWhileRevalidate({
     cacheName: CACHE
+  })
+);
+
+// 🔥 لازم نجيب index.html من الشبكة مباشرة دايمًا
+workbox.routing.registerRoute(
+  ({ request }) => request.mode === 'navigate',
+  new workbox.strategies.NetworkFirst({
+    cacheName: 'html-cache',
+    networkTimeoutSeconds: 3,
+    plugins: [
+      new workbox.expiration.ExpirationPlugin({
+        maxEntries: 5,
+        purgeOnQuotaError: true,
+      }),
+    ],
   })
 );
