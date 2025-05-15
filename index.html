@@ -1263,6 +1263,45 @@ const Pan = new Hammer.Pan({ threshold: 5 });
  
   
 
+document.addEventListener("visibilitychange", function () {
+  if (document.hidden) {
+    console.log("⏸️ تم الخروج من اللعبة أو إطفاء الشاشة");
+
+    // ⛔ أوقف الأحداث التفاعلية
+    isGameRunning = false;
+
+    // ⛔ أفرغ طابور الجمل
+    messageQueue = [];
+    isShowingMessage = false;
+
+    // ⛔ أخفي عناصر الافتار
+    document.getElementById("aiBubble")?.classList.add("hidden");
+    document.getElementById("aiBoard")?.classList.add("hidden");
+    document.getElementById("aiText")?.classList.remove("show");
+
+    // ⛔ أوقف الصوت
+    if (SoundManager?.context?.state === "running") {
+      SoundManager.context.suspend().then(() => {
+        console.log("🔇 تم إيقاف الصوت مؤقتًا");
+      });
+    }
+  } else {
+    console.log("▶️ تم الرجوع للعبة");
+
+    // ✅ استئناف الصوت عند الرجوع
+    if (SoundManager?.context?.state === "suspended") {
+      SoundManager.context.resume().then(() => {
+        console.log("🔊 تم استئناف الصوت");
+      });
+    }
+
+    // ✅ أعد تفعيل اللعب فقط لو كانت الشاشة هي شاشة الجيم
+    const gameScreen = document.getElementById("game");
+    if (gameScreen.classList.contains("active")) {
+      isGameRunning = true;
+    }
+  }
+});
 
 
 
