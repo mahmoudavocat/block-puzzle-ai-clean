@@ -1,8 +1,0 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "com.novacode.blockpuzzleai",
-        "sha256_cert_fingerprints": ["8C:D6:5B:5E:F0:91:7F:16:6A:9A:E1:93:60:B7:CE:74:6D:FA:92:E8:ED:41:F4:CA:DB:80:9A:43:51:48:D6:75"]
-      }
-    }]
