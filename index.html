@@ -1057,17 +1057,21 @@ body {
 <meta name="apple-mobile-web-app-capable" content="yes">
 <script>
 window.addEventListener("DOMContentLoaded", async () => {
-  // ✅ ضبط حالة الصوت حسب التخزين
-const soundPref = localStorage.getItem("soundEnabled");
-window.isSoundOn = (soundPref === null || soundPref === "true");
+// ✅ قراءة الإعداد من التخزين
+let isSoundOn = localStorage.getItem("soundEnabled") !== "false";
+window.isSoundOn = isSoundOn; // نخليه عالمي
 
-if (!isSoundOn && SoundManager?.context?.state === "running") {
-  await SoundManager.context.suspend();
-  console.log("🔇 تم كتم الصوت تلقائيًا");
-} else if (isSoundOn && SoundManager?.context?.state === "suspended") {
-  await SoundManager.context.resume();
-  console.log("🔊 تم تفعيل الصوت تلقائيًا");
+// ✅ طبق الإعداد مباشرة
+if (SoundManager?.context) {
+  if (!isSoundOn && SoundManager.context.state === "running") {
+    await SoundManager.context.suspend();
+    console.log("🔇 تم تعطيل الصوت تلقائيًا من البداية");
+  } else if (isSoundOn && SoundManager.context.state === "suspended") {
+    await SoundManager.context.resume();
+    console.log("🔊 تم تفعيل الصوت تلقائيًا من البداية");
+  }
 }
+
 
 
 
