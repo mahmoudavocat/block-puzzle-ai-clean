@@ -20,6 +20,8 @@
       .catch(err => console.error('❌ Service Worker failed:', err));
   }
 </script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
 
 
   <script>
@@ -3362,21 +3364,25 @@ document.getElementById("closeInsightBtn").textContent = lang === "ar"
       }
     }
 
-    function shareInsight() {
-  const report = document.getElementById("insightAiText").textContent;
-  if (navigator.share) {
-    navigator.share({
-      title: "تحليل البيضة 🧠",
-      text: report,
-    }).then(() => {
-      console.log("✅ تم مشاركة التحليل");
-    }).catch(err => {
-      alert("❌ فشل في المشاركة: " + err);
+function shareInsight() {
+  html2canvas(document.body).then(canvas => {
+    canvas.toBlob(blob => {
+      const file = new File([blob], "report.png", { type: "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({
+          title: "📘 حالتي النفسية",
+          files: [file],
+        });
+      } else {
+        alert("المشاركة غير مدعومة على هذا الجهاز.");
+      }
     });
-  } else {
-    alert("المشاركة غير مدعومة في هذا المتصفح.");
-  }
+  }).catch(err => {
+    alert("حدث خطأ أثناء أخذ لقطة الشاشة: " + err);
+  });
 }
+
+
 
 
 function closeInsight() {
