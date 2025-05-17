@@ -1199,6 +1199,23 @@ script.src = `ai_responses/aiResponses_${playerType}.js`;
     };
     document.head.appendChild(script);
   });
+// ✅ ضبط حالة الصوت عند بدء التشغيل حسب localStorage
+const soundSetting = localStorage.getItem("isSoundOn");
+if (soundSetting === "false") {
+  isSoundOn = false;
+  if (SoundManager?.context?.state === "running") {
+    SoundManager.context.suspend().then(() => {
+      console.log("🔇 بدأ التشغيل والصوت ميت");
+    });
+  }
+} else {
+  isSoundOn = true;
+  if (SoundManager?.context?.state === "suspended") {
+    SoundManager.context.resume().then(() => {
+      console.log("🔊 بدأ التشغيل والصوت شغال");
+    });
+  }
+}
 
   await new Promise((res) => setTimeout(res, 300));
 }
@@ -1830,7 +1847,8 @@ if (isGameRunning) {
     let difficultyLevel = 1;
     let floatingStartX = 0, floatingStartY = 0, pointerStartX = 0, pointerStartY = 0;
     let aiInternalNotes = [];
-let isSoundOn = true; // ← هذا السطر هنا
+let isSoundOn = localStorage.getItem("soundEnabled") !== "false";
+
     let aiMemory = {
       context: [],
       mood: "neutral",
