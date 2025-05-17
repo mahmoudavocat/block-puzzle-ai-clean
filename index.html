@@ -3365,16 +3365,7 @@ document.getElementById("closeInsightBtn").textContent = lang === "ar"
     }
 
 function shareInsight() {
-  const shareBtn = document.getElementById('shareInsightBtn');
-  const backBtn = document.getElementById('backToMainBtn');
-
-  shareBtn.style.display = 'none';
-  backBtn.style.display = 'none';
-
   html2canvas(document.body).then(canvas => {
-    shareBtn.style.display = 'block';
-    backBtn.style.display = 'block';
-
     canvas.toBlob(blob => {
       const file = new File([blob], "report.png", { type: "image/png" });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -3388,11 +3379,8 @@ function shareInsight() {
     });
   }).catch(err => {
     alert("حدث خطأ أثناء أخذ لقطة الشاشة: " + err);
-    shareBtn.style.display = 'block';
-    backBtn.style.display = 'block';
   });
 }
-
 
 
 
