@@ -1093,18 +1093,21 @@ if (soundSetting === "false") {
  ["touchstart", "click", "pointerdown"].forEach(evt => {
   document.body.addEventListener(evt, () => {
     try {
-      if (SoundManager?.context?.state === "suspended") {
-        SoundManager.context.resume().then(() => {
-          console.log(`🔊 AudioContext resumed by ${evt}`);
+    if (SoundManager?.context?.state === "suspended") {
+  SoundManager.context.resume().then(() => {
+    console.log(`🎛️ AudioContext resumed by ${evt} (isSoundOn = ${isSoundOn})`);
 
-          // 🧠 تسخين صوت buttonClick لتفادي اللاج
-          const source = SoundManager.context.createBufferSource();
-          source.buffer = SoundManager.buffers["buttonClick"];
-          source.connect(SoundManager.context.destination);
-          source.start(0);
-          source.stop(SoundManager.context.currentTime + 0.05);
-        });
-      }
+    // ✅ تسخين الصوت فقط لو isSoundOn = true
+    if (isSoundOn) {
+      const source = SoundManager.context.createBufferSource();
+      source.buffer = SoundManager.buffers["buttonClick"];
+      source.connect(SoundManager.context.destination);
+      source.start(0);
+      source.stop(SoundManager.context.currentTime + 0.05);
+    }
+  });
+}
+
     } catch (err) {
       console.warn("⚠️ resume أو التسخين فشل:", err);
     }
