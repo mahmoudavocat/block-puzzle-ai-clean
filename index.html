@@ -3364,39 +3364,23 @@ document.getElementById("closeInsightBtn").textContent = lang === "ar"
       }
     }
 
-async function shareInsight() {
-  const shareButton = document.getElementById('shareInsightBtn');
-  const backButton = document.getElementById('backToMainBtn');
-  const el = document.body;
-
-  // إخفاء الزرّين
-  shareButton.style.display = 'none';
-  backButton.style.display = 'none';
-
-  // التقاط الشاشة
-  const canvas = await html2canvas(el);
-  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-  const file = new File([blob], 'insight.png', { type: 'image/png' });
-
-  // إظهار الزرّين من جديد
-  shareButton.style.display = 'block';
-  backButton.style.display = 'block';
-
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try {
-      await navigator.share({
-        files: [file],
-        title: 'تقريري النفسي',
-        text: 'شاركتك تقريري من لعبة Puzzle AI 🎮🧠'
-      });
-    } catch (err) {
-      console.error('مشاركة فشلت:', err);
-    }
-  } else {
-    alert('مشاركة الصورة غير مدعومة في هذا الجهاز.');
-  }
+function shareInsight() {
+  html2canvas(document.body).then(canvas => {
+    canvas.toBlob(blob => {
+      const file = new File([blob], "report.png", { type: "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({
+          title: "📘 حالتي النفسية",
+          files: [file],
+        });
+      } else {
+        alert("المشاركة غير مدعومة على هذا الجهاز.");
+      }
+    });
+  }).catch(err => {
+    alert("حدث خطأ أثناء أخذ لقطة الشاشة: " + err);
+  });
 }
-
 
 
 
