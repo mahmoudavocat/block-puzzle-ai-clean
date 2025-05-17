@@ -2608,6 +2608,17 @@ function showGameOver() {
   });
   if (history.length > 10) history.shift();
   localStorage.setItem("playerHistory", JSON.stringify(history));
+  // 🧠 تحديث الإحصائيات العامة
+let currentHighScore = Number(localStorage.getItem("blockHighestScore")) || 0;
+if (score > currentHighScore) {
+  localStorage.setItem("blockHighestScore", score);
+}
+
+localStorage.setItem("blockLastScore", score);
+
+let playCount = Number(localStorage.getItem("blockPlayCount")) || 0;
+localStorage.setItem("blockPlayCount", playCount + 1);
+
 
   isGameRunning = false;
 }
@@ -3245,9 +3256,18 @@ startAvatarIntroduction();
       let t = applyLanguageText(lang);
       
       let highestScore = localStorage.getItem("blockHighestScore") || 0;
-      let lastScore = localStorage.getItem("blockLastScore") || 0;
-      let playCount = localStorage.getItem("blockPlayCount") || 0;
+     
       let aiEnabled = localStorage.getItem("aiModeEnabled") !== "false";
+
+      const highScore = localStorage.getItem("blockHighestScore") || 0;
+const lastScore = localStorage.getItem("blockLastScore") || 0;
+const playCount = localStorage.getItem("blockPlayCount") || 0;
+
+statsContent.innerHTML = `
+  <div class="row"><span>🎯 أعلى سكور:</span><span>${highScore}</span></div>
+  <div class="row"><span>🎮 آخر جولة:</span><span>${lastScore}</span></div>
+  <div class="row"><span>🧩 عدد المباريات:</span><span>${playCount}</span></div>
+`;
 
 
 let soundEnabled = localStorage.getItem("soundEnabled") !== "false";
