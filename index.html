@@ -2597,6 +2597,12 @@ function showGameOver() {
   });
   if (history.length > 10) history.shift();
   localStorage.setItem("playerHistory", JSON.stringify(history));
+  // ✅ تحديث playerData بدون حذف أي سطر قديم
+playerData.playCount = (playerData.playCount || 0) + 1;
+playerData.highScore = Math.max(playerData.highScore || 0, score);
+playerData.lastScore = score;
+localStorage.setItem("blockPlayerData", JSON.stringify(playerData));
+
 
   isGameRunning = false;
 }
