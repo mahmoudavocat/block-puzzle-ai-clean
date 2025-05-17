@@ -1324,6 +1324,31 @@ document.addEventListener("visibilitychange", function () {
   }
 });
 
+// ✅ استرجاع إعداد الصوت عند التشغيل
+document.addEventListener("DOMContentLoaded", () => {
+  const savedSound = localStorage.getItem("soundEnabled");
+  if (savedSound !== null) {
+    isSoundOn = savedSound === "true";
+
+    if (!isSoundOn && SoundManager?.context?.state === "running") {
+      SoundManager.context.suspend().then(() => {
+        console.log("🔇 تم تطبيق كتم الصوت من التخزين");
+      });
+    }
+
+    if (isSoundOn && SoundManager?.context?.state === "suspended") {
+      SoundManager.context.resume().then(() => {
+        console.log("🔊 تم تفعيل الصوت من التخزين");
+      });
+    }
+
+    // ✅ تحديث زر الصوت
+    const soundBtn = document.getElementById("soundToggleBtn");
+    if (soundBtn) {
+      soundBtn.textContent = isSoundOn ? "🔊 الصوت: شغال" : "🔇 الصوت: مقفول";
+    }
+  }
+});
 
 
 
