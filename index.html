@@ -1347,15 +1347,15 @@ document.addEventListener("visibilitychange", function () {
       <button onclick="chooseLanguage('en')" class="hero-btn">🇺🇸 English</button>
     </div>
 
-    <div id="step2" class="step" style="display: none;">
-      <p id="genderText">👤 إنت ولد ولا بنت؟</p>
-      <div class="btn-group">
-        <p id="genderNote" style="font-size: 0.9rem; color: #666; margin-top: -10px;"></p>
+   <div id="step2" class="step" style="display: none;">
+  <p id="genderText">👤 إنت ولد ولا بنت؟</p>
+  <div class="btn-group">
+    <button onclick="chooseGender('male')" class="hero-btn">🚹 ولد</button>
+    <button onclick="chooseGender('female')" class="hero-btn">🚺 بنت</button>
+  </div>
+  <p id="genderNote" style="font-size: 0.9rem; color: #555; text-align: center; margin-top: -10px;"></p>
+</div>
 
-        <button onclick="chooseGender('male')" class="hero-btn">🚹 ولد</button>
-        <button onclick="chooseGender('female')" class="hero-btn">🚺 بنت</button>
-      </div>
-    </div>
 
     <div id="finalStep" style="display:none;"></div>
   </div>
@@ -3082,6 +3082,11 @@ document.getElementById("step2").style.display = "block";
   applyLanguage(); // ← سطر مهم جداً لضمان ترجمة باقي الواجهة
   switchScreen("menu"); // ← لو كنت عايز ينقله تلقائيًا للقائمة بعد اللغة
 
+
+  document.getElementById("genderNote").textContent = (lang === "ar")
+  ? "نستخدم هذا الاختيار لتخصيص الأسلوب والكلام داخل اللعبة حسب شخصيتك. لا يتم إرسال هذه المعلومة لأي جهة خارجية."
+  : "We use this choice to personalize the tone and speech inside the game. This info is never shared externally.";
+
 }
 
 
@@ -3391,7 +3396,6 @@ function closeInsight() {
 
     function applyLanguageText(lang) {
       return {
-        
         vibrationLabel: lang === 'ar' ? "📳 الاهتزاز" : "📳 Vibration",
 vibrationOn: lang === 'ar' ? "✅ مفعل" : "✅ On",
 vibrationOff: lang === 'ar' ? "🚫 غير مفعل" : "🚫 Off",
@@ -3407,10 +3411,6 @@ soundOff: lang === 'ar' ? "🚫 مغلق" : "🚫 Off",
         lastScore: lang === 'ar' ? "🎯 آخر نتيجة" : "🎯 Last Score",
         playCount: lang === 'ar' ? "🔥 مرات اللعب" : "🔥 Play Count",
         aiMessage: lang === 'ar' ? "💡 المساعد الذكي" : "💡 Smart Assistant",
-        genderNote: lang === 'ar'
-  ? "نستخدم هذا الاختيار لتخصيص الأسلوب والكلام داخل اللعبة حسب شخصيتك. لا يتم إرسال هذه المعلومة لأي جهة خارجية."
-  : "We use this choice to personalize the tone and speech inside the game. This info is never shared externally.",
-
 aiStatusOn: lang === 'ar' ? "✅ مفعل" : "✅ Enabled",
 aiStatusOff: lang === 'ar' ? "🚫 غير مفعل" : "🚫 Disabled",
 
