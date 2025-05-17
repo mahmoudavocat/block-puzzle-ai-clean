@@ -1362,18 +1362,6 @@ document.addEventListener("visibilitychange", function () {
 </div>
 !-- نهاية welcomeScreen -->
 
-
-<div id="insightScreen">
-  <div id="avatarBox">...</div>
-  <div id="insightContent">...</div>
-  <div id="insightButtons">  <!-- الزرارين -->
-    <button id="shareReport">مشاركة</button>
-    <button id="backFromInsight">رجوع</button>
-  </div>
-</div>
-
-
-
 <!-- هنا تحط شاشة avatarIntroScreen الجديدة -->
 <div class="welcome-screen hidden" id="avatarIntroScreen">
   <div id="avatarWrapper" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:20px;">
@@ -3377,25 +3365,9 @@ document.getElementById("closeInsightBtn").textContent = lang === "ar"
     }
 
 function shareInsight() {
-  const screen = document.getElementById('insightScreen');
-  const avatarBox = document.getElementById('avatarBox');
-  const buttons = document.getElementById('insightButtons');
-
-  // نحسب المسافة من أعلى العنصر + نحدد الطول المناسب
-  const rect = screen.getBoundingClientRect();
-  const avatarTop = avatarBox.offsetTop;
-  const captureTop = Math.max(avatarTop - 20, 0); // أعلى الصورة (20px فوق الافتار)
-  const captureBottom = buttons.offsetTop;        // الزرارين بداية نهاية الصورة
-  const captureHeight = captureBottom - captureTop;
-
-  html2canvas(screen, {
-    y: captureTop,
-    height: captureHeight,
-    scrollY: -window.scrollY,
-  }).then(canvas => {
+  html2canvas(document.body).then(canvas => {
     canvas.toBlob(blob => {
       const file = new File([blob], "report.png", { type: "image/png" });
-
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         navigator.share({
           title: "📘 حالتي النفسية",
@@ -3409,7 +3381,6 @@ function shareInsight() {
     alert("حدث خطأ أثناء أخذ لقطة الشاشة: " + err);
   });
 }
-
 
 
 
