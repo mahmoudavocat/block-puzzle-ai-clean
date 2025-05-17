@@ -3083,16 +3083,19 @@ document.getElementById("step2").style.display = "block";
   switchScreen("menu"); // ← لو كنت عايز ينقله تلقائيًا للقائمة بعد اللغة
 
 
-  document.getElementById("genderNote").textContent = (lang === "ar")
-  ? "نستخدم هذا الاختيار لتخصيص الأسلوب والكلام داخل اللعبة حسب شخصيتك. لا يتم إرسال هذه المعلومة لأي جهة خارجية."
-  : "We use this choice to personalize the tone and speech inside the game. This info is never shared externally.";
-
+ 
 }
 
 
 function chooseGender(gender) {
   playerData.gender = gender;
   localStorage.setItem("blockPlayerData", JSON.stringify(playerData));
+  // 👇 عرض الجملة التوضيحية بناءً على اللغة
+const note = lang === "ar"
+  ? "نستخدم هذا الاختيار لتخصيص الأسلوب والكلام داخل اللعبة حسب شخصيتك. لا يتم إرسال هذه المعلومة لأي جهة خارجية."
+  : "We use this to personalize the style and speech in the game. This info is not sent to anyone.";
+document.getElementById("genderNote").textContent = note;
+
 
   document.getElementById("welcomeScreen").classList.add("hidden");
   document.getElementById("avatarIntroScreen").classList.remove("hidden");
