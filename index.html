@@ -1057,6 +1057,18 @@ body {
 <meta name="apple-mobile-web-app-capable" content="yes">
 <script>
 window.addEventListener("DOMContentLoaded", async () => {
+  // ✅ ضبط حالة الصوت حسب التخزين
+const soundPref = localStorage.getItem("soundEnabled");
+window.isSoundOn = (soundPref === null || soundPref === "true");
+
+if (!isSoundOn && SoundManager?.context?.state === "running") {
+  await SoundManager.context.suspend();
+  console.log("🔇 تم كتم الصوت تلقائيًا");
+} else if (isSoundOn && SoundManager?.context?.state === "suspended") {
+  await SoundManager.context.resume();
+  console.log("🔊 تم تفعيل الصوت تلقائيًا");
+}
+
 
 
   // ✅ فحص حالة الصوت المخزنة
@@ -1324,31 +1336,6 @@ document.addEventListener("visibilitychange", function () {
   }
 });
 
-// ✅ استرجاع إعداد الصوت عند التشغيل
-document.addEventListener("DOMContentLoaded", () => {
-  const savedSound = localStorage.getItem("soundEnabled");
-  if (savedSound !== null) {
-    isSoundOn = savedSound === "true";
-
-    if (!isSoundOn && SoundManager?.context?.state === "running") {
-      SoundManager.context.suspend().then(() => {
-        console.log("🔇 تم تطبيق كتم الصوت من التخزين");
-      });
-    }
-
-    if (isSoundOn && SoundManager?.context?.state === "suspended") {
-      SoundManager.context.resume().then(() => {
-        console.log("🔊 تم تفعيل الصوت من التخزين");
-      });
-    }
-
-    // ✅ تحديث زر الصوت
-    const soundBtn = document.getElementById("soundToggleBtn");
-    if (soundBtn) {
-      soundBtn.textContent = isSoundOn ? "🔊 الصوت: شغال" : "🔇 الصوت: مقفول";
-    }
-  }
-});
 
 
 
@@ -1876,7 +1863,7 @@ if (isGameRunning) {
     let difficultyLevel = 1;
     let floatingStartX = 0, floatingStartY = 0, pointerStartX = 0, pointerStartY = 0;
     let aiInternalNotes = [];
-let isSoundOn = localStorage.getItem("soundEnabled") !== "false";
+
 
     let aiMemory = {
       context: [],
