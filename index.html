@@ -3365,9 +3365,25 @@ document.getElementById("closeInsightBtn").textContent = lang === "ar"
     }
 
 function shareInsight() {
-  html2canvas(document.body).then(canvas => {
+  const screen = document.getElementById('insightScreen');
+  const avatarBox = document.getElementById('avatarBox');
+  const buttons = document.getElementById('insightButtons');
+
+  // نحسب المسافة من أعلى العنصر + نحدد الطول المناسب
+  const rect = screen.getBoundingClientRect();
+  const avatarTop = avatarBox.offsetTop;
+  const captureTop = Math.max(avatarTop - 20, 0); // أعلى الصورة (20px فوق الافتار)
+  const captureBottom = buttons.offsetTop;        // الزرارين بداية نهاية الصورة
+  const captureHeight = captureBottom - captureTop;
+
+  html2canvas(screen, {
+    y: captureTop,
+    height: captureHeight,
+    scrollY: -window.scrollY,
+  }).then(canvas => {
     canvas.toBlob(blob => {
       const file = new File([blob], "report.png", { type: "image/png" });
+
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         navigator.share({
           title: "📘 حالتي النفسية",
@@ -3381,6 +3397,7 @@ function shareInsight() {
     alert("حدث خطأ أثناء أخذ لقطة الشاشة: " + err);
   });
 }
+
 
 
 
