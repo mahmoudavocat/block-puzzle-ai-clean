@@ -3227,9 +3227,10 @@ startAvatarIntroduction();
       let lang = savedData.language || 'ar';
       let t = applyLanguageText(lang);
       
-      let highestScore = localStorage.getItem("blockHighestScore") || 0;
-      let lastScore = localStorage.getItem("blockLastScore") || 0;
-      let playCount = localStorage.getItem("blockPlayCount") || 0;
+    let highestScore = savedData.highScore || 0;
+let lastScore = savedData.lastScore || 0;
+let playCount = savedData.playCount || 0;
+
       let aiEnabled = localStorage.getItem("aiModeEnabled") !== "false";
 
 
