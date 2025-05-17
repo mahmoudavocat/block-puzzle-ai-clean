@@ -1362,6 +1362,18 @@ document.addEventListener("visibilitychange", function () {
 </div>
 !-- نهاية welcomeScreen -->
 
+
+<div id="insightScreen">
+  <div id="avatarBox">...</div>
+  <div id="insightContent">...</div>
+  <div id="insightButtons">  <!-- الزرارين -->
+    <button id="shareReport">مشاركة</button>
+    <button id="backFromInsight">رجوع</button>
+  </div>
+</div>
+
+
+
 <!-- هنا تحط شاشة avatarIntroScreen الجديدة -->
 <div class="welcome-screen hidden" id="avatarIntroScreen">
   <div id="avatarWrapper" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:20px;">
@@ -3364,23 +3376,53 @@ document.getElementById("closeInsightBtn").textContent = lang === "ar"
       }
     }
 
-function shareInsight() {
-  html2canvas(document.body).then(canvas => {
-    canvas.toBlob(blob => {
-      const file = new File([blob], "report.png", { type: "image/png" });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({
-          title: "📘 حالتي النفسية",
-          files: [file],
-        });
-      } else {
-        alert("المشاركة غير مدعومة على هذا الجهاز.");
-      }
-    });
-  }).catch(err => {
-    alert("حدث خطأ أثناء أخذ لقطة الشاشة: " + err);
+    document.getElementById("shareReport").addEventListener("click", shareInsight);
+
+async function shareInsight() {
+  const el = document.querySelector('#gameContainer'); // تصوير الشاشة كلها
+  const canvas = await html2canvas(el, {
+    useCORS: true,
+    scale: 2,
+    windowWidth: document.documentElement.scrollWidth,
+    windowHeight: document.documentElement.scrollHeight
   });
+
+  // تحديد الجزء من الصورة من فوق الأفاتار ولحد قبل الزرارين
+  const fullImg = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+  const cropStartY = Math.floor(canvas.height * 0.10); // يبدأ من فوق الأفاتار
+  const cropEndY = canvas.height - Math.floor(canvas.height * 0.13); // ينتهي قبل الزرارين
+  const croppedHeight = cropEndY - cropStartY;
+
+  const croppedCanvas = document.createElement('canvas');
+  croppedCanvas.width = canvas.width;
+  croppedCanvas.height = croppedHeight;
+
+  const ctx = croppedCanvas.getContext('2d');
+  ctx.putImageData(fullImg, 0, -cropStartY);
+
+  croppedCanvas.toBlob(async (blob) => {
+    const filesArray = [
+      new File([blob], 'report.png', {
+        type: 'image/png',
+        lastModified: new Date().getTime()
+      })
+    ];
+
+    const shareData = {
+      files: filesArray,
+      title: 'نتيجتي في Block Puzzle AI',
+      text: 'شوفوا تقريري النفسي في اللعبة 🔍🧠',
+    };
+
+    try {
+      await navigator.share(shareData);
+    } catch (err) {
+      alert("المشاركة غير مدعومة على هذا الجهاز");
+    }
+  }, 'image/png');
 }
+
+
 
 
 
