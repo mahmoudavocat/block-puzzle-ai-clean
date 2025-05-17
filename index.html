@@ -3090,11 +3090,10 @@ document.getElementById("step2").style.display = "block";
 function chooseGender(gender) {
   playerData.gender = gender;
   localStorage.setItem("blockPlayerData", JSON.stringify(playerData));
-  // 👇 عرض الجملة التوضيحية بناءً على اللغة
-const note = lang === "ar"
+const note = playerData.language === "ar"
   ? "نستخدم هذا الاختيار لتخصيص الأسلوب والكلام داخل اللعبة حسب شخصيتك. لا يتم إرسال هذه المعلومة لأي جهة خارجية."
-  : "We use this to personalize the style and speech in the game. This info is not sent to anyone.";
-document.getElementById("genderNote").textContent = note;
+  : "We use this choice to personalize the style and dialogue inside the game based on your character. This data is not sent to any external party.";
+
 
 
   document.getElementById("welcomeScreen").classList.add("hidden");
