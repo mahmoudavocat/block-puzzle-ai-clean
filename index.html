@@ -22,6 +22,8 @@
 </script>
 
 
+
+
   <script>
     function enterFullscreen() {
       if (document.documentElement.requestFullscreen) {
@@ -1051,6 +1053,19 @@ body {
 
 </style>
 
+
+<style>
+/* ✅ منع تحديد النص واللمس المطول */
+* {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+</style>
+
+
+
 <!-- إضافة هذه الأسطر -->
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1342,6 +1357,26 @@ document.addEventListener("visibilitychange", function () {
     }
   }
 });
+
+
+// ✅ منع السحب من الأعلى (Pull-to-refresh)
+let maybePreventPullToRefresh = false;
+let lastTouchY = 0;
+
+document.addEventListener("touchstart", function (e) {
+  if (e.touches.length !== 1) return;
+  lastTouchY = e.touches[0].clientY;
+  maybePreventPullToRefresh = window.pageYOffset === 0;
+}, { passive: false });
+
+document.addEventListener("touchmove", function (e) {
+  const touchY = e.touches[0].clientY;
+  const touchYDiff = touchY - lastTouchY;
+
+  if (maybePreventPullToRefresh && touchYDiff > 0) {
+    e.preventDefault(); // ✅ يمنع الـ reload
+  }
+}, { passive: false });
 
 
 
