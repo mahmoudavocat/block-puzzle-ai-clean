@@ -3058,6 +3058,8 @@ document.getElementById("step2").style.display = "block";
   if(lang === 'en') {
     document.getElementById("welcomeText").innerText = "🤖 Hello! Let me know you better!";
     document.getElementById("genderText").innerText = "👤 Are you a boy or a girl?";
+    document.getElementById("genderNote").innerText = "We use this choice to personalize the style and dialogue inside the game based on your character. This data is not sent to any external party.";
+
     document.querySelectorAll("#step2 button")[0].innerText = "🚹 Boy";
     document.querySelectorAll("#step2 button")[1].innerText = "🚺 Girl";
 
@@ -3069,6 +3071,8 @@ document.getElementById("step2").style.display = "block";
   } else {
     document.getElementById("welcomeText").innerText = "🤖 أهلاً! خلينا نتعرف عليك شوية!";
     document.getElementById("genderText").innerText = "👤 إنت ولد ولا بنت؟";
+    document.getElementById("genderNote").innerText = "نستخدم هذا الاختيار لتخصيص الأسلوب والكلام داخل اللعبة حسب شخصيتك. لا يتم إرسال هذه المعلومة لأي جهة خارجية.";
+
     document.querySelectorAll("#step2 button")[0].innerText = "🚹 ولد";
     document.querySelectorAll("#step2 button")[1].innerText = "🚺 بنت";
 
@@ -3081,6 +3085,7 @@ document.getElementById("step2").style.display = "block";
 
   applyLanguage(); // ← سطر مهم جداً لضمان ترجمة باقي الواجهة
   switchScreen("menu"); // ← لو كنت عايز ينقله تلقائيًا للقائمة بعد اللغة
+
 
 
  
